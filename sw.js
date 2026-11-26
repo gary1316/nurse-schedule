@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v4-pink-free';
+const CACHE = 'nurse-schedule-v5-themed-free';
 const ASSETS = [
   './',
   './index.html',

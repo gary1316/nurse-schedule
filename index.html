@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="護士排程">
@@ -11,94 +11,379 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
+<script>
+(function(){
+  try {
+    var d = JSON.parse(localStorage.getItem('nurse_teacher_v1') || '{}');
+    document.documentElement.setAttribute('data-theme', d.theme || 'pink');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'pink');
+  }
+})();
+</script>
 <title>護士老師排程工具</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #fdf4f7; color: #1a1a1a; padding-bottom: 70px; }
-header { background: #d46a8a; color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-header h1 { font-size: 1.25rem; font-weight: 600; }
-.tabs { display: flex; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 56px; z-index: 90; }
-.tab { flex: 1; text-align: center; padding: 12px; font-size: 0.9rem; cursor: pointer; color: #666; }
-.tab.active { color: #d46a8a; border-bottom: 3px solid #d46a8a; font-weight: 600; }
-.container { padding: 12px; }
-.card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.card h3 { margin-bottom: 8px; font-size: 1.05rem; }
-.btn { display: inline-block; background: #d46a8a; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; cursor: pointer; width: 100%; margin-top: 8px; }
-.btn.secondary { background: #eee; color: #333; }
-.btn.danger { background: #e53935; }
-input, select, textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-label { font-size: 0.85rem; color: #555; display: block; margin-top: 8px; }
-.student-item, .event-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
-.student-item:last-child, .event-item:last-child { border-bottom: none; }
-.event-item.conflict { border-left: 4px solid #e53935; background: #ffebee; padding-left: 8px; }
-.badge { background: #fce8ef; color: #b44d6a; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
-.day-header { background: #fce8ef; padding: 8px 12px; font-weight: 600; margin: 16px -12px 8px -12px; display: flex; justify-content: space-between; align-items: center; }
-.free-time { background: #e8f5e9; color: #2e7d32; padding: 10px 12px; margin: 6px 0; border-radius: 8px; font-size: 0.95rem; cursor: pointer; border: 1px dashed #66bb6a; }
-.free-time:active { background: #c8e6c9; }
-.suggestion-btn { display: block; width: 100%; text-align: left; background: #fce8ef; color: #b44d6a; border: none; padding: 10px 12px; margin: 4px 0; border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
-.suggestion-btn:active { background: #f8bbd0; }
-.suggestion-title { font-size: 0.85rem; color: #666; margin-bottom: 6px; font-weight: 600; }
-.free-total { font-size: 0.8rem; color: #388e3c; font-weight: 600; }
-.event-item { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 14px 12px; 
-  border-bottom: 1px solid #f0f0f0; 
-  gap: 12px;
-  background: white;
+:root, [data-theme="pink"] {
+  --bg: #fbf3f6;
+  --surface: #ffffff;
+  --text: #3a2430;
+  --text-muted: #8a6873;
+  --primary: #d46a8a;
+  --primary-dark: #b44d6a;
+  --primary-soft: #fde8ef;
+  --primary-muted: #f3c1d0;
+  --header: #d46a8a;
+  --header-shadow: 0 4px 16px rgba(180, 77, 106, 0.28);
+  --tab-bg: #fffafb;
+  --day-bg: #fde8ef;
+  --day-text: #8a3d58;
+  --free-bg: #f3faf5;
+  --free-text: #2f6b45;
+  --free-border: #cfe8d6;
+  --input-bg: #fff8fa;
+  --border: #f0d8e0;
+  --card-shadow: 0 2px 12px rgba(180, 77, 106, 0.08);
+  --fab-shadow: 0 6px 16px rgba(212, 106, 138, 0.38);
+  --overlay: rgba(58, 36, 48, 0.45);
+  --danger: #e53935;
+  --danger-bg: #ffebee;
+  --highlight: #fff0e0;
+  --color-scheme: light;
 }
-.event-item .info { 
-  flex: 1; 
-  min-width: 0; 
+[data-theme="blue"] {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --text: #1a1a1a;
+  --text-muted: #667085;
+  --primary: #1e88e5;
+  --primary-dark: #1565c0;
+  --primary-soft: #e3f2fd;
+  --primary-muted: #bbdefb;
+  --header: #1e88e5;
+  --header-shadow: 0 4px 16px rgba(21, 101, 192, 0.28);
+  --tab-bg: #ffffff;
+  --day-bg: #e3f2fd;
+  --day-text: #1565c0;
+  --free-bg: #e8f5e9;
+  --free-text: #2e7d32;
+  --free-border: #81c784;
+  --input-bg: #fafafa;
+  --border: #e0e4ea;
+  --card-shadow: 0 2px 10px rgba(21, 101, 192, 0.08);
+  --fab-shadow: 0 6px 16px rgba(30, 136, 229, 0.38);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --danger: #e53935;
+  --danger-bg: #ffebee;
+  --highlight: #fff3e0;
+  --color-scheme: light;
+}
+[data-theme="lavender"] {
+  --bg: #f6f3fb;
+  --surface: #ffffff;
+  --text: #2c2438;
+  --text-muted: #7a6d8c;
+  --primary: #7e57c2;
+  --primary-dark: #5e35b1;
+  --primary-soft: #eee7f8;
+  --primary-muted: #d1c4e9;
+  --header: #7e57c2;
+  --header-shadow: 0 4px 16px rgba(94, 53, 177, 0.28);
+  --tab-bg: #fbfaff;
+  --day-bg: #eee7f8;
+  --day-text: #5e35b1;
+  --free-bg: #f3faf6;
+  --free-text: #2f6b45;
+  --free-border: #cfe8d6;
+  --input-bg: #faf8ff;
+  --border: #e4dcf0;
+  --card-shadow: 0 2px 12px rgba(94, 53, 177, 0.08);
+  --fab-shadow: 0 6px 16px rgba(126, 87, 194, 0.38);
+  --overlay: rgba(44, 36, 56, 0.45);
+  --danger: #e53935;
+  --danger-bg: #ffebee;
+  --highlight: #fff0e0;
+  --color-scheme: light;
+}
+[data-theme="mint"] {
+  --bg: #f1f8f5;
+  --surface: #ffffff;
+  --text: #1e3a32;
+  --text-muted: #5d7a72;
+  --primary: #2a9d8f;
+  --primary-dark: #1d7a70;
+  --primary-soft: #e6f6f3;
+  --primary-muted: #b2dfdb;
+  --header: #2a9d8f;
+  --header-shadow: 0 4px 16px rgba(29, 122, 112, 0.28);
+  --tab-bg: #f7fbf9;
+  --day-bg: #e6f6f3;
+  --day-text: #1d7a70;
+  --free-bg: #fff8ef;
+  --free-text: #8a5a20;
+  --free-border: #f0d9b0;
+  --input-bg: #f7fbf9;
+  --border: #d5e8e2;
+  --card-shadow: 0 2px 12px rgba(29, 122, 112, 0.08);
+  --fab-shadow: 0 6px 16px rgba(42, 157, 143, 0.38);
+  --overlay: rgba(30, 58, 50, 0.45);
+  --danger: #e53935;
+  --danger-bg: #ffebee;
+  --highlight: #fff0e0;
+  --color-scheme: light;
+}
+[data-theme="dark"] {
+  --bg: #161215;
+  --surface: #241c20;
+  --text: #f5eef1;
+  --text-muted: #b59aa3;
+  --primary: #e08aa4;
+  --primary-dark: #f3b3c3;
+  --primary-soft: #3d2a32;
+  --primary-muted: #5a3a46;
+  --header: #2a1e23;
+  --header-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --tab-bg: #1c1619;
+  --day-bg: #3d2a32;
+  --day-text: #f3b3c3;
+  --free-bg: #1c2a22;
+  --free-text: #8fd4a0;
+  --free-border: #3d5c45;
+  --input-bg: #2e2428;
+  --border: #4a3a40;
+  --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --fab-shadow: 0 6px 16px rgba(224, 138, 164, 0.35);
+  --overlay: rgba(0, 0, 0, 0.65);
+  --danger: #ef5350;
+  --danger-bg: #4a2224;
+  --highlight: #4a3a28;
+  --color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { color-scheme: var(--color-scheme); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  min-height: 100dvh;
+}
+button { font-family: inherit; }
+header {
+  background: var(--header);
+  color: #fff;
+  padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--header-shadow);
+}
+header h1 { font-size: 1.15rem; font-weight: 650; letter-spacing: 0.02em; }
+.tabs {
+  display: flex;
+  background: var(--tab-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: calc(46px + env(safe-area-inset-top));
+  z-index: 90;
+}
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  position: relative;
+}
+.tab.active {
+  color: var(--primary);
+  font-weight: 650;
+}
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--primary);
+}
+.container { padding: 14px; }
+.card {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+}
+.card h3 { margin-bottom: 8px; font-size: 1.05rem; color: var(--text); }
+.hint { font-size: 0.88rem; color: var(--text-muted); margin: 6px 0 10px; line-height: 1.45; }
+.empty { text-align: center; color: var(--text-muted); padding: 28px 12px; font-size: 0.95rem; }
+.btn {
+  display: inline-block;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+}
+.btn:active { transform: scale(0.98); opacity: 0.92; }
+.btn.secondary { background: var(--primary-soft); color: var(--primary-dark); }
+.btn.danger { background: var(--danger); color: #fff; }
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 36px;
+  padding: 0 10px;
+  margin: 0 0 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 600;
   cursor: pointer;
 }
+.icon-btn:active { background: var(--primary-soft); }
+#undoBtn { font-size: 0.8rem; font-weight: 600; opacity: 0.4; }
+.week-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.week-toolbar h3 { margin: 0; flex: 1; min-width: 0; }
+.week-nav { display: flex; align-items: center; flex-shrink: 0; }
+label { font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 8px; }
+input, select, textarea {
+  width: 100%;
+  max-width: 100%;
+  padding: 12px 10px;
+  margin: 4px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 16px;
+  background: var(--input-bg);
+  color: var(--text);
+  box-sizing: border-box;
+  display: block;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+input[type="date"], input[type="time"] {
+  min-height: 48px;
+  text-align: left;
+  padding-left: 10px;
+  padding-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.student-item, .event-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.student-item:last-child, .event-item:last-child { border-bottom: none; }
+.event-item {
+  padding: 14px 12px;
+  background: var(--surface);
+  cursor: pointer;
+  border-radius: 0;
+}
+.event-item.conflict { border-left: 4px solid var(--danger); background: var(--danger-bg); padding-left: 8px; }
+.event-item .info { flex: 1; min-width: 0; cursor: pointer; }
 .event-item .delete-btn {
-  background: #ff5252;
+  background: var(--danger);
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 12px;
   font-size: 0.8rem;
   font-weight: 600;
   flex-shrink: 0;
   min-width: 44px;
 }
-.free-time { 
-  background: #e8f5e9; 
-  color: #2e7d32; 
-  padding: 14px 16px; 
-  margin: 8px 0; 
-  border-radius: 12px; 
-  font-size: 0.95rem; 
-  cursor: pointer; 
-  border: 1px dashed #81c784; 
+.badge {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
 }
-.day-header { 
-  background: #fce8ef; 
-  padding: 12px 16px; 
-  font-weight: 600; 
-  margin: 20px -16px 12px -16px; 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
+.day-header {
+  background: var(--day-bg);
+  color: var(--day-text);
+  padding: 10px 14px;
+  font-weight: 650;
+  margin: 16px 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 14px;
 }
-.event-item { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 14px 12px; 
-  border-bottom: 1px solid #f0f0f0; 
-  gap: 12px;
-  background: white;
+.day-header:first-child { margin-top: 8px; }
+.free-time {
+  background: var(--free-bg);
+  color: var(--free-text);
+  padding: 12px 14px;
+  margin: 6px 0;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px dashed var(--free-border);
 }
-.event-item .info { flex: 1; min-width: 0; cursor: pointer; }
+.free-time:active { filter: brightness(0.97); }
+.free-total {
+  font-size: 0.75rem;
+  color: var(--free-text);
+  font-weight: 650;
+  background: var(--free-bg);
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--free-border);
+}
+.suggestion-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border: none;
+  padding: 10px 12px;
+  margin: 4px 0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.suggestion-btn:active { background: var(--primary-muted); }
+.suggestion-title { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
 .swipe-container { position: relative; overflow: hidden; }
 .swipe-delete {
   position: absolute;
   right: 0; top: 0; bottom: 0;
   width: 80px;
-  background: #e53935;
+  background: var(--danger);
   color: white;
   border: none;
   font-weight: 600;
@@ -108,77 +393,97 @@ label { font-size: 0.85rem; color: #555; display: block; margin-top: 8px; }
   pointer-events: auto;
 }
 .swipe-container.swiped .swipe-delete { transform: translateX(0); }
-.swipe-container.swiped .event-item { 
-  transform: translateX(-80px); 
-  transition: transform 0.2s ease; 
+.swipe-container.swiped .event-item {
+  transform: translateX(-80px);
+  transition: transform 0.2s ease;
   pointer-events: none;
 }
-.event-item { cursor: pointer; }
-.fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background: #d46a8a; color: white; border-radius: 50%; border: none; font-size: 28px; box-shadow: 0 4px 12px rgba(212,106,138,0.4); cursor: pointer; z-index: 200; }
-.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
+.fab {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  font-size: 28px;
+  box-shadow: var(--fab-shadow);
+  cursor: pointer;
+  z-index: 200;
+}
+.fab:active { transform: scale(0.96); }
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 300;
+  align-items: flex-end;
+}
 .modal.show { display: flex; }
-.modal-content { 
-  background: white; 
-  width: 100%; 
-  max-width: 100vw; 
-  max-height: 92vh; 
-  border-radius: 16px 16px 0 0; 
-  padding: 12px 12px 48px 12px; 
-  overflow-y: auto; 
-  -webkit-overflow-scrolling: touch; 
+.modal-content {
+  background: var(--surface);
+  color: var(--text);
+  width: 100%;
+  max-width: 100vw;
+  max-height: 92vh;
+  border-radius: 20px 20px 0 0;
+  padding: 16px 16px calc(48px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
 }
 .modal-content h2 { margin-bottom: 8px; font-size: 1.15rem; }
-.close { float: right; font-size: 28px; cursor: pointer; color: #999; line-height: 1; }
-input, select, textarea { 
-  width: 100%; 
-  max-width: 100%; 
-  padding: 12px 10px; 
-  margin: 4px 0 12px; 
-  border: 1px solid #ddd; 
-  border-radius: 10px; 
-  font-size: 16px; 
-  background: #fafafa; 
-  box-sizing: border-box; 
-  display: block;
+.close { float: right; font-size: 28px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+.edit-summary {
+  display: none;
+  background: var(--input-bg);
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
 }
-input[type="date"], input[type="time"] { 
-  min-height: 48px; 
-  max-width: 100%; 
-  width: 100%; 
-  font-size: 15px; 
-  text-align: center; 
-  padding: 12px 6px; 
-  box-sizing: border-box; 
-  -webkit-appearance: none; 
-  appearance: none; 
+.flash-highlight { background: var(--highlight) !important; transition: background 0.3s; }
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  width: 100%;
+}
+.theme-option.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+  font-weight: 650;
+}
+.theme-swatches {
+  display: flex;
+  height: 22px;
+  width: 100%;
+  border-radius: 8px;
   overflow: hidden;
 }
-input[type="date"]::-webkit-date-and-time-value,
-input[type="time"]::-webkit-date-and-time-value {
-  text-align: center;
-  margin: 0;
-}
-input, select, textarea { 
-  width: 100%; 
-  max-width: 100%; 
-  padding: 12px 8px; 
-  margin: 4px 0 12px; 
-  border: 1px solid #ddd; 
-  border-radius: 10px; 
-  font-size: 16px; 
-  background: #fafafa; 
-  box-sizing: border-box; 
-  display: block;
-}
-input[type="date"], input[type="time"] { 
-  min-height: 48px; 
-  text-align: left; 
-  padding-left: 10px; 
-  padding-right: 10px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+.theme-swatches span { flex: 1; }
+.theme-option-label { font-size: 0.88rem; }
+.note-muted { color: var(--text-muted); }
+.conflict-note { color: var(--danger); }
 </style>
 </head>
 <body>
@@ -203,12 +508,12 @@ input[type="date"], input[type="time"] {
 
 <div id="view-schedule" class="container" style="display:none;">
   <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div class="week-toolbar">
       <h3 id="week-title">本週時間表</h3>
-      <div>
-        <button id="undoBtn" class="btn secondary" style="width:auto; padding:6px 10px; opacity:0.4;" onclick="undo()">還原</button>
-        <button class="btn secondary" style="width:auto; padding:6px 10px;" onclick="changeWeek(-1)">‹</button>
-        <button class="btn secondary" style="width:auto; padding:6px 10px;" onclick="changeWeek(1)">›</button>
+      <div class="week-nav">
+        <button id="undoBtn" class="icon-btn" onclick="undo()">還原</button>
+        <button class="icon-btn" onclick="changeWeek(-1)" aria-label="上一週">‹</button>
+        <button class="icon-btn" onclick="changeWeek(1)" aria-label="下一週">›</button>
       </div>
     </div>
     <div id="schedule-list"></div>
@@ -218,8 +523,13 @@ input[type="date"], input[type="time"] {
 
 <div id="view-settings" class="container" style="display:none;">
   <div class="card">
+    <h3>主題</h3>
+    <p class="hint">選擇介面顏色，設定會保存在這部手機。</p>
+    <div id="theme-picker" class="theme-grid"></div>
+  </div>
+  <div class="card">
     <h3>資料管理</h3>
-    <p style="font-size:0.9rem; color:#666; margin:8px 0;">所有資料只存在這部手機（完全離線）。</p>
+    <p class="hint">所有資料只存在這部手機（完全離線）。</p>
     <button class="btn secondary" onclick="exportData()">匯出備份</button>
     <button class="btn secondary" onclick="document.getElementById('importFile').click()">匯入備份</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
@@ -227,7 +537,7 @@ input[type="date"], input[type="time"] {
   </div>
   <div class="card">
     <h3>活動項目管理</h3>
-    <p style="font-size:0.85rem; color:#666; margin-bottom:8px;">可新增、修改或刪除項目，會影響建議與選擇列表。</p>
+    <p class="hint">可新增、修改或刪除項目，會影響建議與選擇列表。</p>
     <div id="activity-type-list"></div>
     <button class="btn" onclick="openActivityTypeModal()">+ 新增項目</button>
     <button class="btn secondary" onclick="if(confirm('恢復所有預設項目？')){ data.activityTypes = JSON.parse(JSON.stringify(DEFAULT_ACTIVITY_TYPES)); save(); renderActivityTypes(); }">恢復預設</button>
@@ -282,7 +592,7 @@ input[type="date"], input[type="time"] {
   <div class="modal-content">
     <span class="close" onclick="closeModal('eventModal')">&times;</span>
     <h2 id="eventModalTitle">新增排程</h2>
-    <div id="editSummary" style="display:none; background:#f5f5f5; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:0.9rem;"></div>
+    <div id="editSummary" class="edit-summary"></div>
     <input type="hidden" id="eventId">
     <div id="suggestions" style="margin-bottom:12px;"></div>
     <label>日期</label>
@@ -307,8 +617,50 @@ input[type="date"], input[type="time"] {
 
 <script>
 const STORAGE_KEY = 'nurse_teacher_v1';
-let data = { students: [], events: [], weekOffset: 0, activityTypes: null };
+let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink' };
 let history = [];
+
+const THEMES = [
+  { id: 'pink', label: '粉色', swatches: ['#d46a8a', '#fde8ef', '#fbf3f6', '#cfe8d6'] },
+  { id: 'blue', label: '藍色', swatches: ['#1e88e5', '#e3f2fd', '#f5f7fa', '#c8e6c9'] },
+  { id: 'lavender', label: '紫色', swatches: ['#7e57c2', '#eee7f8', '#f6f3fb', '#cfe8d6'] },
+  { id: 'mint', label: '薄荷', swatches: ['#2a9d8f', '#e6f6f3', '#f1f8f5', '#f0d9b0'] },
+  { id: 'dark', label: '深色', swatches: ['#e08aa4', '#3d2a32', '#161215', '#1c2a22'] }
+];
+
+function applyTheme(id, persist) {
+  const theme = THEMES.some(t => t.id === id) ? id : 'pink';
+  document.documentElement.setAttribute('data-theme', theme);
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--header').trim()
+    || getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta && color) meta.content = color;
+  const bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+  if (bar) bar.content = theme === 'dark' ? 'black-translucent' : 'default';
+  if (persist !== false && data.theme !== theme) {
+    data.theme = theme;
+    save();
+  }
+}
+
+function setTheme(id) {
+  applyTheme(id, true);
+  renderThemePicker();
+}
+
+function renderThemePicker() {
+  const el = document.getElementById('theme-picker');
+  if (!el) return;
+  const current = data.theme || 'pink';
+  el.innerHTML = THEMES.map(t => `
+    <button type="button" class="theme-option${t.id === current ? ' active' : ''}" onclick="setTheme('${t.id}')">
+      <div class="theme-swatches">${t.swatches.map(c => `<span style="background:${c}"></span>`).join('')}</div>
+      <span class="theme-option-label">${t.label}</span>
+    </button>
+  `).join('');
+}
+
+
 
 function pushHistory() {
   history.push(JSON.parse(JSON.stringify(data.events)));
@@ -355,17 +707,15 @@ function undo() {
 function highlightEvent(id) {
   const el = document.querySelector(`[data-event-id="${id}"]`);
   if (!el) return;
-  el.style.transition = 'background 0.3s';
-  el.style.background = '#fff3e0';
-  setTimeout(() => { el.style.background = ''; }, 800);
+  el.classList.add('flash-highlight');
+  setTimeout(() => { el.classList.remove('flash-highlight'); }, 800);
 }
 
 function highlightDate(dateStr) {
   const header = document.querySelector(`.day-header[data-date="${dateStr}"]`);
   if (!header) return;
-  header.style.transition = 'background 0.3s';
-  header.style.background = '#fff3e0';
-  setTimeout(() => { header.style.background = ''; }, 800);
+  header.classList.add('flash-highlight');
+  setTimeout(() => { header.classList.remove('flash-highlight'); }, 800);
 }
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -401,6 +751,8 @@ function load() {
       }
     });
   }
+  if (!data.theme) data.theme = 'pink';
+  applyTheme(data.theme, false);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
@@ -412,7 +764,7 @@ function switchTab(tab) {
   document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
   if (tab === 'students') renderStudents();
   if (tab === 'schedule') renderSchedule();
-  if (tab === 'settings') renderActivityTypes();
+  if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); }
 }
 
 function renderStudents() {
@@ -594,7 +946,7 @@ function renderSchedule() {
           const end = minutesToTime(timeToMinutes(e.start) + (e.duration || 60));
           const conflicts = detectConflicts(e, e.id);
           const conflictClass = conflicts.length > 0 ? ' conflict' : '';
-          const conflictNote = conflicts.length > 0 ? `<br><small style="color:#c62828;">⚠ ${conflicts[0]}</small>` : '';
+          const conflictNote = conflicts.length > 0 ? `<br><small class="conflict-note">⚠ ${conflicts[0]}</small>` : '';
           const at = data.activityTypes.find(a => a.id === e.type || a.label === e.typeLabel);
           const color = at && at.color ? at.color : '#d46a8a';
           html += `<div class="swipe-container" data-event-id="${e.id}">
@@ -602,7 +954,7 @@ function renderSchedule() {
               <div class="info">
                 <div style="font-weight:600;">${e.start}–${end}</div>
                 <div style="color:${color}; font-weight:600;">${e.typeLabel || e.type}</div>
-                <small style="color:#666;">${stu ? stu.name : ''}${e.note ? ' · ' + e.note : ''}</small>
+                <small class="note-muted">${stu ? stu.name : ''}${e.note ? ' · ' + e.note : ''}</small>
               </div>
             </div>
             <button class="swipe-delete" data-id="${e.id}" type="button">刪除</button>
@@ -1127,6 +1479,7 @@ try {
   load();
   renderStudents();
   renderActivityTypes();
+  renderThemePicker();
   const dateInput = document.getElementById('eDate');
   if (dateInput) dateInput.valueAsDate = new Date();
   console.log('App loaded');

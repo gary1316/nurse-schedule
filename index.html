@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>護士老師排程工具</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7fa; color: #1a1a1a; padding-bottom: 70px; }
+header { background: #1e88e5; color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+header h1 { font-size: 1.25rem; font-weight: 600; }
+.tabs { display: flex; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 56px; z-index: 90; }
+.tab { flex: 1; text-align: center; padding: 12px; font-size: 0.9rem; cursor: pointer; color: #666; }
+.tab.active { color: #1e88e5; border-bottom: 3px solid #1e88e5; font-weight: 600; }
+.container { padding: 12px; }
+.card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.card h3 { margin-bottom: 8px; font-size: 1.05rem; }
+.btn { display: inline-block; background: #1e88e5; color: white; border: none; padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; cursor: pointer; width: 100%; margin-top: 8px; }
+.btn.secondary { background: #eee; color: #333; }
+.btn.danger { background: #e53935; }
+input, select, textarea { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+label { font-size: 0.85rem; color: #555; display: block; margin-top: 8px; }
+.student-item, .event-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.student-item:last-child, .event-item:last-child { border-bottom: none; }
+.event-item.conflict { border-left: 4px solid #e53935; background: #ffebee; padding-left: 8px; }
+.badge { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; }
+.day-header { background: #e3f2fd; padding: 8px 12px; font-weight: 600; margin: 16px -12px 8px -12px; display: flex; justify-content: space-between; align-items: center; }
+.free-time { background: #e8f5e9; color: #2e7d32; padding: 10px 12px; margin: 6px 0; border-radius: 8px; font-size: 0.95rem; cursor: pointer; border: 1px dashed #66bb6a; }
+.free-time:active { background: #c8e6c9; }
+.suggestion-btn { display: block; width: 100%; text-align: left; background: #e3f2fd; color: #1565c0; border: none; padding: 10px 12px; margin: 4px 0; border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
+.suggestion-btn:active { background: #bbdefb; }
+.suggestion-title { font-size: 0.85rem; color: #666; margin-bottom: 6px; font-weight: 600; }
+.free-total { font-size: 0.8rem; color: #388e3c; font-weight: 600; }
+.event-item { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 14px 12px; 
+  border-bottom: 1px solid #f0f0f0; 
+  gap: 12px;
+  background: white;
+}
+.event-item .info { 
+  flex: 1; 
+  min-width: 0; 
+  cursor: pointer;
+}
+.event-item .delete-btn {
+  background: #ff5252;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 44px;
+}
+.free-time { 
+  background: #e8f5e9; 
+  color: #2e7d32; 
+  padding: 14px 16px; 
+  margin: 8px 0; 
+  border-radius: 12px; 
+  font-size: 0.95rem; 
+  cursor: pointer; 
+  border: 1px dashed #81c784; 
+}
+.day-header { 
+  background: #e3f2fd; 
+  padding: 12px 16px; 
+  font-weight: 600; 
+  margin: 20px -16px 12px -16px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+}
+.event-item { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 14px 12px; 
+  border-bottom: 1px solid #f0f0f0; 
+  gap: 12px;
+  background: white;
+}
+.event-item .info { flex: 1; min-width: 0; cursor: pointer; }
+.swipe-container { position: relative; overflow: hidden; }
+.swipe-delete {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 80px;
+  background: #e53935;
+  color: white;
+  border: none;
+  font-weight: 600;
+  transform: translateX(100%);
+  transition: transform 0.2s ease;
+  z-index: 10;
+  pointer-events: auto;
+}
+.swipe-container.swiped .swipe-delete { transform: translateX(0); }
+.swipe-container.swiped .event-item { 
+  transform: translateX(-80px); 
+  transition: transform 0.2s ease; 
+  pointer-events: none;
+}
+.event-item { cursor: pointer; }
+.fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; background: #1e88e5; color: white; border-radius: 50%; border: none; font-size: 28px; box-shadow: 0 4px 12px rgba(30,136,229,0.4); cursor: pointer; z-index: 200; }
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
+.modal.show { display: flex; }
+.modal-content { 
+  background: white; 
+  width: 100%; 
+  max-width: 100vw; 
+  max-height: 92vh; 
+  border-radius: 16px 16px 0 0; 
+  padding: 12px 12px 48px 12px; 
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch; 
+  box-sizing: border-box;
+}
+.modal-content h2 { margin-bottom: 8px; font-size: 1.15rem; }
+.close { float: right; font-size: 28px; cursor: pointer; color: #999; line-height: 1; }
+input, select, textarea { 
+  width: 100%; 
+  max-width: 100%; 
+  padding: 12px 10px; 
+  margin: 4px 0 12px; 
+  border: 1px solid #ddd; 
+  border-radius: 10px; 
+  font-size: 16px; 
+  background: #fafafa; 
+  box-sizing: border-box; 
+  display: block;
+}
+input[type="date"], input[type="time"] { 
+  min-height: 48px; 
+  max-width: 100%; 
+  width: 100%; 
+  font-size: 15px; 
+  text-align: center; 
+  padding: 12px 6px; 
+  box-sizing: border-box; 
+  -webkit-appearance: none; 
+  appearance: none; 
+  overflow: hidden;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value {
+  text-align: center;
+  margin: 0;
+}
+input, select, textarea { 
+  width: 100%; 
+  max-width: 100%; 
+  padding: 12px 8px; 
+  margin: 4px 0 12px; 
+  border: 1px solid #ddd; 
+  border-radius: 10px; 
+  font-size: 16px; 
+  background: #fafafa; 
+  box-sizing: border-box; 
+  display: block;
+}
+input[type="date"], input[type="time"] { 
+  min-height: 48px; 
+  text-align: left; 
+  padding-left: 10px; 
+  padding-right: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>護士老師排程工具</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('students')">學生</div>
+  <div class="tab" onclick="switchTab('schedule')">時間表</div>
+  <div class="tab" onclick="switchTab('settings')">設定</div>
+</div>
+
+<div id="view-students" class="container">
+  <div class="card">
+    <h3>本學期學生</h3>
+    <div id="student-list"></div>
+    <button class="btn" onclick="openStudentModal()">+ 新增學生</button>
+  </div>
+</div>
+
+<div id="view-schedule" class="container" style="display:none;">
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 id="week-title">本週時間表</h3>
+      <div>
+        <button id="undoBtn" class="btn secondary" style="width:auto; padding:6px 10px; opacity:0.4;" onclick="undo()">還原</button>
+        <button class="btn secondary" style="width:auto; padding:6px 10px;" onclick="changeWeek(-1)">‹</button>
+        <button class="btn secondary" style="width:auto; padding:6px 10px;" onclick="changeWeek(1)">›</button>
+      </div>
+    </div>
+    <div id="schedule-list"></div>
+  </div>
+  <button class="fab" onclick="openEventModal()">+</button>
+</div>
+
+<div id="view-settings" class="container" style="display:none;">
+  <div class="card">
+    <h3>資料管理</h3>
+    <p style="font-size:0.9rem; color:#666; margin:8px 0;">所有資料只存在這部手機（完全離線）。</p>
+    <button class="btn secondary" onclick="exportData()">匯出備份</button>
+    <button class="btn secondary" onclick="document.getElementById('importFile').click()">匯入備份</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn secondary" onclick="alert('JavaScript 正常運作');">測試按鈕</button>
+  </div>
+  <div class="card">
+    <h3>活動項目管理</h3>
+    <p style="font-size:0.85rem; color:#666; margin-bottom:8px;">可新增、修改或刪除項目，會影響建議與選擇列表。</p>
+    <div id="activity-type-list"></div>
+    <button class="btn" onclick="openActivityTypeModal()">+ 新增項目</button>
+    <button class="btn secondary" onclick="if(confirm('恢復所有預設項目？')){ data.activityTypes = JSON.parse(JSON.stringify(DEFAULT_ACTIVITY_TYPES)); save(); renderActivityTypes(); }">恢復預設</button>
+  </div>
+  <div class="card">
+    <h3>工作時間</h3>
+    <p>固定：08:15 – 17:00</p>
+  </div>
+</div>
+
+<!-- 學生 Modal -->
+<div id="studentModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('studentModal')">&times;</span>
+    <h2 id="studentModalTitle">新增學生</h2>
+    <input type="hidden" id="studentId">
+    <label>姓名</label>
+    <input type="text" id="sName" placeholder="學生姓名">
+    <label>班別</label>
+    <input type="text" id="sClass" placeholder="例如：NUR2024A">
+    <label>醫院</label>
+    <select id="sHospital">
+      <option value="QMH">瑪麗醫院 QMH</option>
+      <option value="TWH">東華醫院 TWH</option>
+      <option value="GH">葛量洪醫院 GH</option>
+    </select>
+    <label>實習結束日期</label>
+    <input type="date" id="sEndDate">
+    <label>備註</label>
+    <textarea id="sNote" rows="2"></textarea>
+    <button class="btn" onclick="saveStudent()">儲存</button>
+  </div>
+</div>
+
+<!-- 活動項目管理 Modal -->
+<div id="activityTypeModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('activityTypeModal')">&times;</span>
+    <h2 id="activityTypeModalTitle">新增項目</h2>
+    <input type="hidden" id="atId">
+    <label>顯示名稱</label>
+    <input type="text" id="atLabel" placeholder="例如：考試 · 派藥 AOM">
+    <label>預設時長（分鐘）</label>
+    <input type="number" id="atDuration" value="60" min="15" step="15">
+    <label>顏色</label>
+    <input type="color" id="atColor" value="#1e88e5">
+    <button class="btn" onclick="saveActivityType()">儲存</button>
+  </div>
+</div>
+<!-- 活動 Modal -->
+<div id="eventModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('eventModal')">&times;</span>
+    <h2 id="eventModalTitle">新增排程</h2>
+    <div id="editSummary" style="display:none; background:#f5f5f5; padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:0.9rem;"></div>
+    <input type="hidden" id="eventId">
+    <div id="suggestions" style="margin-bottom:12px;"></div>
+    <label>日期</label>
+    <input type="date" id="eDate">
+    <label>學生（可選）</label>
+    <select id="eStudent"><option value="">— 不指定 —</option></select>
+    <label>活動項目</label>
+    <select id="eType" onchange="onActivityTypeChange()">
+      <option value="">— 選擇項目 —</option>
+    </select>
+    <div id="typeDetails"></div>
+    <label>開始時間</label>
+    <input type="time" id="eStart" value="08:30">
+    <label>時長（分鐘）</label>
+    <input type="number" id="eDuration" value="60" min="15" step="15">
+    <label>備註</label>
+    <textarea id="eNote" rows="2"></textarea>
+    <button class="btn" onclick="saveEvent()">儲存</button>
+    <button class="btn danger" id="deleteEventBtn" style="display:none;" onclick="confirmDeleteFromModal()">刪除此項目</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'nurse_teacher_v1';
+let data = { students: [], events: [], weekOffset: 0, activityTypes: null };
+let history = [];
+
+function pushHistory() {
+  history.push(JSON.parse(JSON.stringify(data.events)));
+  if (history.length > 10) history.shift();
+  const btn = document.getElementById('undoBtn');
+  if (btn) btn.style.opacity = '1';
+}
+
+function undo() {
+  if (history.length === 0) return;
+  const prev = history.pop();
+  const current = data.events;
+
+  // 找出差異
+  const added = prev.filter(p => !current.some(c => c.id === p.id));
+  const removed = current.filter(c => !prev.some(p => p.id === c.id));
+  const changed = prev.filter(p => {
+    const c = current.find(x => x.id === p.id);
+    return c && (c.start !== p.start || c.date !== p.date || c.duration !== p.duration || c.typeLabel !== p.typeLabel);
+  });
+
+  data.events = prev;
+  save();
+  renderSchedule();
+
+  const btn = document.getElementById('undoBtn');
+  if (btn) btn.style.opacity = history.length > 0 ? '1' : '0.4';
+
+  // 高亮受影響的地方
+  setTimeout(() => {
+    if (added.length > 0) {
+      // 還原的是已刪除的項目 → 高亮該項目
+      added.forEach(ev => highlightEvent(ev.id));
+    } else if (removed.length > 0) {
+      // 還原的是剛新增的項目 → 高亮該日期
+      removed.forEach(ev => highlightDate(ev.date));
+    } else if (changed.length > 0) {
+      // 還原的是修改 → 高亮該項目
+      changed.forEach(ev => highlightEvent(ev.id));
+    }
+  }, 50);
+}
+
+function highlightEvent(id) {
+  const el = document.querySelector(`[data-event-id="${id}"]`);
+  if (!el) return;
+  el.style.transition = 'background 0.3s';
+  el.style.background = '#fff3e0';
+  setTimeout(() => { el.style.background = ''; }, 800);
+}
+
+function highlightDate(dateStr) {
+  const header = document.querySelector(`.day-header[data-date="${dateStr}"]`);
+  if (!header) return;
+  header.style.transition = 'background 0.3s';
+  header.style.background = '#fff3e0';
+  setTimeout(() => { header.style.background = ''; }, 800);
+}
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+const DEFAULT_ACTIVITY_TYPES = [
+  { id: 'exam_aom', label: '考試 · 派藥 AOM', type: 'exam', sub: 'AOM', duration: 90, priority: 1, color: '#e53935' },
+  { id: 'coach_aom', label: 'Coaching · 派藥 AOM', type: 'coaching', sub: 'AOM', duration: 30, priority: 2, color: '#fb8c00' },
+  { id: 'exam_at', label: '考試 · 洗傷口 AT', type: 'exam', sub: 'AT', duration: 45, priority: 1, color: '#8e24aa' },
+  { id: 'coach_at', label: 'Coaching · 洗傷口 AT', type: 'coaching', sub: 'AT', duration: 45, priority: 2, color: '#5e35b1' },
+  { id: 'exam_hfpe', label: '考試 · HFPE', type: 'exam', sub: 'HFPE', duration: 60, priority: 1, color: '#d81b60' },
+  { id: 'coach_hfpe', label: 'Coaching · 畢業試 HFPE', type: 'coaching', sub: 'HFPE', duration: 90, priority: 2, color: '#c2185b' },
+  { id: 'travel', label: '交通時間', type: 'travel', sub: '', duration: 60, priority: 3, color: '#546e7a' },
+  { id: 'visit', label: 'Weekly Visit', type: 'visit', sub: '', duration: 15, priority: 3, color: '#00897b' },
+  { id: 'lab', label: 'Lab', type: 'lab', sub: '', duration: 60, priority: 4, color: '#1e88e5' },
+  { id: 'meeting', label: 'Meeting', type: 'meeting', sub: '', duration: 60, priority: 4, color: '#43a047' },
+  { id: 'zoom', label: 'Zoom 上堂', type: 'zoom', sub: '', duration: 60, priority: 4, color: '#039be5' },
+  { id: 'office', label: 'Office 入 Data', type: 'office', sub: '', duration: 45, priority: 4, color: '#6d4c41' }
+];
+
+function load() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) data = JSON.parse(raw);
+  if (!data.students) data.students = [];
+  if (!data.events) data.events = [];
+  if (!data.activityTypes || !Array.isArray(data.activityTypes)) {
+    data.activityTypes = JSON.parse(JSON.stringify(DEFAULT_ACTIVITY_TYPES));
+  } else {
+    // 補上缺少顏色的項目
+    data.activityTypes.forEach(at => {
+      if (!at.color) {
+        const def = DEFAULT_ACTIVITY_TYPES.find(d => d.id === at.id);
+        at.color = def ? def.color : '#1e88e5';
+      }
+    });
+  }
+}
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('view-students').style.display = tab === 'students' ? 'block' : 'none';
+  document.getElementById('view-schedule').style.display = tab === 'schedule' ? 'block' : 'none';
+  document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
+  if (tab === 'students') renderStudents();
+  if (tab === 'schedule') renderSchedule();
+  if (tab === 'settings') renderActivityTypes();
+}
+
+function renderStudents() {
+  const list = document.getElementById('student-list');
+  if (data.students.length === 0) {
+    list.innerHTML = '<div class="empty">尚未新增學生</div>';
+    return;
+  }
+  list.innerHTML = data.students.map(s => `
+    <div class="student-item">
+      <div>
+        <strong>${s.name}</strong> <span class="badge">${s.hospital}</span><br>
+        <small>${s.class || ''} · 結束：${s.endDate || '未設定'}</small>
+      </div>
+      <button class="btn secondary" style="width:auto; padding:6px 12px;" onclick="editStudent('${s.id}')">編輯</button>
+    </div>
+  `).join('');
+}
+
+function openStudentModal(id) {
+  document.getElementById('studentModalTitle').textContent = id ? '編輯學生' : '新增學生';
+  document.getElementById('studentId').value = id || '';
+  if (id) {
+    const s = data.students.find(x => x.id === id);
+    document.getElementById('sName').value = s.name;
+    document.getElementById('sClass').value = s.class || '';
+    document.getElementById('sHospital').value = s.hospital;
+    document.getElementById('sEndDate').value = s.endDate || '';
+    document.getElementById('sNote').value = s.note || '';
+  } else {
+    document.getElementById('sName').value = '';
+    document.getElementById('sClass').value = '';
+    document.getElementById('sEndDate').value = '';
+    document.getElementById('sNote').value = '';
+  }
+  document.getElementById('studentModal').classList.add('show');
+}
+function editStudent(id) { openStudentModal(id); }
+
+function saveStudent() {
+  const id = document.getElementById('studentId').value || Date.now().toString();
+  const student = {
+    id,
+    name: document.getElementById('sName').value.trim(),
+    class: document.getElementById('sClass').value.trim(),
+    hospital: document.getElementById('sHospital').value,
+    endDate: document.getElementById('sEndDate').value,
+    note: document.getElementById('sNote').value.trim()
+  };
+  if (!student.name) return alert('請輸入姓名');
+  const idx = data.students.findIndex(s => s.id === id);
+  if (idx >= 0) data.students[idx] = student;
+  else data.students.push(student);
+  save();
+  closeModal('studentModal');
+  renderStudents();
+}
+
+function getWeekDates(offset = 0) {
+  const today = new Date();
+  const start = new Date(today);
+  start.setDate(today.getDate() - today.getDay() + 1 + offset * 7); // Monday
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    days.push(d);
+  }
+  return days;
+}
+
+function changeWeek(delta) {
+  data.weekOffset = (data.weekOffset || 0) + delta;
+  save();
+  renderSchedule();
+}
+
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+function minutesToTime(mins) {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+function formatDuration(mins) {
+  if (mins < 60) return `${mins}分鐘`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m ? `${h}小時${m}分` : `${h}小時`;
+}
+
+function getFreeSlots(events) {
+  const WORK_START = timeToMinutes('08:15');
+  const WORK_END = timeToMinutes('17:00');
+  const slots = [];
+  const busy = events.map(e => {
+    const start = timeToMinutes(e.start);
+    const end = start + (e.duration || 60);
+    return { start: Math.max(start, WORK_START), end: Math.min(end, WORK_END) };
+  }).filter(b => b.end > b.start).sort((a,b) => a.start - b.start);
+
+  // Merge overlapping
+  const merged = [];
+  for (const b of busy) {
+    if (!merged.length || merged[merged.length-1].end < b.start) {
+      merged.push({...b});
+    } else {
+      merged[merged.length-1].end = Math.max(merged[merged.length-1].end, b.end);
+    }
+  }
+
+  let current = WORK_START;
+  for (const b of merged) {
+    if (b.start > current) {
+      slots.push({ start: current, end: b.start, free: true });
+    }
+    current = Math.max(current, b.end);
+  }
+  if (current < WORK_END) {
+    slots.push({ start: current, end: WORK_END, free: true });
+  }
+  return slots;
+}
+
+function renderSchedule() {
+  const offset = data.weekOffset || 0;
+  const days = getWeekDates(offset);
+  const title = document.getElementById('week-title');
+  title.textContent = `${days[0].toLocaleDateString('zh-HK', {month:'short', day:'numeric'})} – ${days[6].toLocaleDateString('zh-HK', {month:'short', day:'numeric'})}`;
+
+  let html = '';
+  days.forEach(day => {
+    const dateStr = day.toISOString().split('T')[0];
+    const dayEvents = data.events.filter(e => e.date === dateStr);
+    const freeSlots = getFreeSlots(dayEvents);
+    const totalFree = freeSlots.reduce((sum, s) => sum + (s.end - s.start), 0);
+
+    // 建立統一時間線項目
+    const timeline = [];
+
+    // 加入事件
+    dayEvents.forEach(e => {
+      const startMin = timeToMinutes(e.start);
+      timeline.push({
+        type: 'event',
+        start: startMin,
+        data: e
+      });
+    });
+
+    // 加入空閒時段（只保留 >=15 分鐘）
+    freeSlots.forEach(slot => {
+      if (slot.end - slot.start >= 15) {
+        timeline.push({
+          type: 'free',
+          start: slot.start,
+          data: slot
+        });
+      }
+    });
+
+    // 按時間排序
+    timeline.sort((a, b) => a.start - b.start);
+
+    html += `<div class="day-header" data-date="${dateStr}">
+      <span>${day.toLocaleDateString('zh-HK', {weekday:'short', month:'numeric', day:'numeric'})}</span>
+      <span class="free-total">剩餘 ${formatDuration(totalFree)}</span>
+    </div>`;
+
+    if (timeline.length === 0) {
+      html += `<div class="free-time" onclick="openEventModal('${dateStr}', '08:15', 525)">全天空閒（08:15–17:00） · 點擊加入排程</div>`;
+    } else {
+      timeline.forEach(item => {
+        if (item.type === 'event') {
+          const e = item.data;
+          const stu = data.students.find(s => s.id === e.studentId);
+          const end = minutesToTime(timeToMinutes(e.start) + (e.duration || 60));
+          const conflicts = detectConflicts(e, e.id);
+          const conflictClass = conflicts.length > 0 ? ' conflict' : '';
+          const conflictNote = conflicts.length > 0 ? `<br><small style="color:#c62828;">⚠ ${conflicts[0]}</small>` : '';
+          const at = data.activityTypes.find(a => a.id === e.type || a.label === e.typeLabel);
+          const color = at && at.color ? at.color : '#1e88e5';
+          html += `<div class="swipe-container" data-event-id="${e.id}">
+            <div class="timeline-item event-item${conflictClass}" style="border-left: 4px solid ${color};" onclick="openEventModal(null, null, null, '${e.id}')">
+              <div class="info">
+                <div style="font-weight:600;">${e.start}–${end}</div>
+                <div style="color:${color}; font-weight:600;">${e.typeLabel || e.type}</div>
+                <small style="color:#666;">${stu ? stu.name : ''}${e.note ? ' · ' + e.note : ''}</small>
+              </div>
+            </div>
+            <button class="swipe-delete" data-id="${e.id}" type="button">刪除</button>
+          </div>`;
+        } else {
+          const slot = item.data;
+          const dur = slot.end - slot.start;
+          const startStr = minutesToTime(slot.start);
+          const endStr = minutesToTime(slot.end);
+          html += `<div class="timeline-item free-time" onclick="openEventModal('${dateStr}', '${startStr}', ${dur})">
+            空閒：${startStr}–${endStr} （${formatDuration(dur)}）<br>
+            <small style="opacity:0.8;">點擊加入建議項目</small>
+          </div>`;
+        }
+      });
+    }
+  });
+  document.getElementById('schedule-list').innerHTML = html;
+  bindDeleteButtons();
+}
+
+function getSuggestions(startTime, availableMinutes) {
+  if (!startTime || !availableMinutes || availableMinutes < 15) return [];
+  const freeStart = timeToMinutes(startTime);
+  const freeEnd = freeStart + availableMinutes;
+  const suggestions = [];
+
+  // Helper: 檢查是否能在 free slot 內放下指定時長，且開始時間落在 preferred 附近或窗口內
+  function canFit(preferredStart, duration, toleranceMin = 30) {
+    const actualStart = Math.max(freeStart, preferredStart - toleranceMin);
+    const actualEnd = actualStart + duration;
+    return actualEnd <= freeEnd && actualStart >= freeStart && (actualStart <= preferredStart + toleranceMin);
+  }
+
+  // 考試 AOM 90min — 必須接近 10:00 或 16:00
+  if (availableMinutes >= 90) {
+    if (canFit(timeToMinutes('10:00'), 90, 30) || canFit(timeToMinutes('16:00'), 90, 30)) {
+      suggestions.push({ type: 'exam', sub: 'AOM', label: '考試 · 派藥 AOM（90分鐘）', duration: 90, priority: 1 });
+    }
+  }
+  // Coaching AOM 30min
+  if (availableMinutes >= 30) {
+    if (canFit(timeToMinutes('10:00'), 30, 45) || canFit(timeToMinutes('16:00'), 30, 45)) {
+      suggestions.push({ type: 'coaching', sub: 'AOM', label: 'Coaching · 派藥 AOM（30分鐘）', duration: 30, priority: 2 });
+    }
+  }
+
+  // AT 45min — 嚴格限 08:30–10:30
+  if (availableMinutes >= 45 && freeStart >= timeToMinutes('08:30') && freeEnd <= timeToMinutes('10:30')) {
+    suggestions.push({ type: 'exam', sub: 'AT', label: '考試 · 洗傷口 AT（45分鐘）', duration: 45, priority: 1 });
+    suggestions.push({ type: 'coaching', sub: 'AT', label: 'Coaching · 洗傷口 AT（45分鐘）', duration: 45, priority: 2 });
+  }
+
+  // 考試 HFPE 60min — 必須完整落在三個窗口之一
+  if (availableMinutes >= 60) {
+    const windows = [
+      [timeToMinutes('08:30'), timeToMinutes('09:30')],
+      [timeToMinutes('09:30'), timeToMinutes('10:30')],
+      [timeToMinutes('10:30'), timeToMinutes('11:30')]
+    ];
+    const fits = windows.some(([ws, we]) => {
+      const possibleStart = Math.max(freeStart, ws);
+      return possibleStart + 60 <= Math.min(freeEnd, we);
+    });
+    if (fits) {
+      suggestions.push({ type: 'exam', sub: 'HFPE', label: '考試 · HFPE（60分鐘）', duration: 60, priority: 1 });
+    }
+  }
+
+  // Coaching HFPE 90min — 較寬鬆
+  if (availableMinutes >= 90 && freeStart >= timeToMinutes('08:30') && freeEnd <= timeToMinutes('16:30')) {
+    suggestions.push({ type: 'coaching', sub: 'HFPE', label: 'Coaching · 畢業試 HFPE（90分鐘）', duration: 90, priority: 2 });
+  }
+
+  // 通用項目（較低優先）
+  if (availableMinutes >= 60) {
+    suggestions.push({ type: 'travel', sub: '', label: '交通時間（60分鐘）', duration: 60, priority: 3 });
+  }
+  if (availableMinutes >= 15) {
+    suggestions.push({ type: 'visit', sub: '', label: 'Weekly Visit（15–30分鐘）', duration: Math.min(30, availableMinutes), priority: 3 });
+  }
+  if (availableMinutes >= 30) {
+    suggestions.push({ type: 'lab', sub: '', label: 'Lab', duration: Math.min(60, availableMinutes), priority: 4 });
+    suggestions.push({ type: 'meeting', sub: '', label: 'Meeting', duration: Math.min(60, availableMinutes), priority: 4 });
+    suggestions.push({ type: 'zoom', sub: '', label: 'Zoom 上堂', duration: Math.min(60, availableMinutes), priority: 4 });
+    suggestions.push({ type: 'office', sub: '', label: 'Office 入 Data', duration: Math.min(45, availableMinutes), priority: 4 });
+  }
+
+  // 按優先級排序（數字越小越優先）
+  return suggestions.sort((a, b) => a.priority - b.priority);
+}
+
+function applySuggestion(type, sub, duration) {
+  // 嘗試找到匹配的 activity type
+  const matched = data.activityTypes.find(a => a.type === type && (a.sub === sub || !sub));
+  if (matched) {
+    document.getElementById('eType').value = matched.id;
+    onActivityTypeChange();
+  }
+  document.getElementById('eDuration').value = duration;
+  document.getElementById('suggestions').style.display = 'none';
+}
+
+function populateActivityTypeSelect(selectedId) {
+  const sel = document.getElementById('eType');
+  sel.innerHTML = '<option value="">— 選擇項目 —</option>' +
+    data.activityTypes.map(at => `<option value="${at.id}">${at.label}</option>`).join('');
+  if (selectedId) sel.value = selectedId;
+}
+
+function onActivityTypeChange() {
+  const id = document.getElementById('eType').value;
+  const at = data.activityTypes.find(a => a.id === id);
+  if (at && at.duration) {
+    document.getElementById('eDuration').value = at.duration;
+  }
+}
+
+function openEventModal(preDate, preStart, maxDuration, editId) {
+  const sel = document.getElementById('eStudent');
+  sel.innerHTML = '<option value="">— 不指定 —</option>' + data.students.map(s => `<option value="${s.id}">${s.name} (${s.hospital})</option>`).join('');
+
+  document.getElementById('eventId').value = editId || '';
+  const titleEl = document.getElementById('eventModalTitle');
+  const summaryEl = document.getElementById('editSummary');
+
+  if (editId) {
+    titleEl.textContent = '編輯中';
+    document.getElementById('deleteEventBtn').style.display = 'block';
+    const ev = data.events.find(e => e.id === editId);
+    if (ev) {
+      const stu = data.students.find(s => s.id === ev.studentId);
+      summaryEl.style.display = 'block';
+      summaryEl.innerHTML = `
+        <strong>正在編輯：</strong><br>
+        ${ev.start} · ${ev.typeLabel || ev.type}<br>
+        <small>${stu ? stu.name + ' (' + stu.hospital + ')' : '未指定學生'} ${ev.note ? '· ' + ev.note : ''}</small>
+      `;
+      document.getElementById('eDate').value = ev.date;
+      document.getElementById('eStart').value = ev.start;
+      document.getElementById('eDuration').value = ev.duration || 60;
+      document.getElementById('eNote').value = ev.note || '';
+      document.getElementById('eStudent').value = ev.studentId || '';
+      
+      // 填入活動項目
+      populateActivityTypeSelect();
+      let matched = data.activityTypes.find(a => a.id === ev.type);
+      if (!matched) matched = data.activityTypes.find(a => a.label === ev.typeLabel);
+      if (matched) {
+        document.getElementById('eType').value = matched.id;
+      }
+    }
+  } else {
+    titleEl.textContent = '新增排程';
+    summaryEl.style.display = 'none';
+    document.getElementById('deleteEventBtn').style.display = 'none';
+    document.getElementById('eDate').value = preDate || new Date().toISOString().split('T')[0];
+    if (preStart) document.getElementById('eStart').value = preStart;
+    document.getElementById('eNote').value = '';
+    document.getElementById('eStudent').value = '';
+    document.getElementById('eType').value = '';
+  }
+
+  populateActivityTypeSelect();
+
+  const suggestionsDiv = document.getElementById('suggestions');
+  suggestionsDiv.style.display = editId ? 'none' : 'block';
+  suggestionsDiv.innerHTML = '';
+
+  if (!editId && preStart && maxDuration) {
+    const suggestions = getSuggestions(preStart, maxDuration);
+    if (suggestions.length > 0) {
+      suggestionsDiv.innerHTML = '<div class="suggestion-title">根據此時段建議：</div>' +
+        suggestions.map(s => 
+          `<button class="suggestion-btn" onclick="applySuggestion('${s.type}', '${s.sub}', ${s.duration})">${s.label}</button>`
+        ).join('');
+    }
+    document.getElementById('eDuration').max = maxDuration;
+  } else if (!editId) {
+    document.getElementById('eDuration').removeAttribute('max');
+  }
+
+  document.getElementById('eventModal').classList.add('show');
+}
+
+function detectConflicts(event, excludeId = null) {
+  const conflicts = [];
+  const start = timeToMinutes(event.start);
+  const end = start + (event.duration || 60);
+  const WORK_START = timeToMinutes('08:15');
+  const WORK_END = timeToMinutes('17:00');
+
+  // 超出工作時間
+  if (start < WORK_START || end > WORK_END) {
+    conflicts.push('超出工作時間（08:15–17:00）');
+  }
+
+  // 同一天重疊
+  data.events.forEach(e => {
+    if (e.id === excludeId || e.date !== event.date) return;
+    const eStart = timeToMinutes(e.start);
+    const eEnd = eStart + (e.duration || 60);
+    if (start < eEnd && end > eStart) {
+      conflicts.push(`與「${e.typeLabel || e.type} ${e.start}」時間重疊`);
+    }
+  });
+
+  return conflicts;
+}
+
+function getStudentHospital(studentId) {
+  if (!studentId) return null;
+  const s = data.students.find(x => x.id === studentId);
+  return s ? s.hospital : null;
+}
+
+function autoReserveTravel(newEvent) {
+  if (!newEvent.studentId) return null;
+  const newHosp = getStudentHospital(newEvent.studentId);
+  if (!newHosp) return null;
+
+  const sameDay = data.events
+    .filter(e => e.date === newEvent.date && e.id !== newEvent.id)
+    .sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+
+  const prev = [...sameDay].reverse().find(e => timeToMinutes(e.start) < timeToMinutes(newEvent.start));
+  if (!prev || !prev.studentId) return null;
+
+  const prevHosp = getStudentHospital(prev.studentId);
+  if (!prevHosp || prevHosp === newHosp) return null;
+
+  const prevEnd = timeToMinutes(prev.start) + (prev.duration || 60);
+  const requiredTravelStart = prevEnd;
+  const requiredNewStart = requiredTravelStart + 60;
+  const currentNewStart = timeToMinutes(newEvent.start);
+  const shiftAmount = Math.max(0, requiredNewStart - currentNewStart);
+
+  return {
+    prevHosp,
+    newHosp,
+    travelStart: minutesToTime(requiredTravelStart),
+    shiftAmount,
+    requiredNewStart
+  };
+}
+
+function saveEvent() {
+  try {
+    const editId = document.getElementById('eventId').value;
+    const typeId = document.getElementById('eType').value;
+    const at = data.activityTypes.find(a => a.id === typeId);
+    const sel = document.getElementById('eType');
+    const selectedText = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : '自訂';
+    const event = {
+      id: editId || Date.now().toString(),
+      date: document.getElementById('eDate').value,
+      studentId: document.getElementById('eStudent').value || null,
+      type: typeId || 'custom',
+      typeLabel: at ? at.label : selectedText,
+      start: document.getElementById('eStart').value,
+      duration: parseInt(document.getElementById('eDuration').value) || 60,
+      note: document.getElementById('eNote').value.trim()
+    };
+    if (!event.date || !event.start) return alert('請填寫日期與時間');
+
+    const travelInfo = autoReserveTravel(event);
+    let doTravel = false;
+
+    if (travelInfo) {
+      const shiftText = travelInfo.shiftAmount > 0 
+        ? `\n並將後續項目往後推移 ${travelInfo.shiftAmount} 分鐘` 
+        : '';
+      const msg = `前一個活動在 ${travelInfo.prevHosp}，本次在 ${travelInfo.newHosp}。\n是否預留 1 小時交通時間${shiftText}？`;
+      doTravel = confirm(msg);
+    }
+
+    const existingIdx = data.events.findIndex(e => e.id === event.id);
+    if (existingIdx >= 0) data.events[existingIdx] = event;
+    else data.events.push(event);
+
+    if (doTravel && travelInfo) {
+      if (travelInfo.shiftAmount > 0) {
+        data.events.forEach(e => {
+          if (e.date === event.date && e.id !== event.id) {
+            const eStart = timeToMinutes(e.start);
+            if (eStart >= timeToMinutes(event.start)) {
+              e.start = minutesToTime(eStart + travelInfo.shiftAmount);
+            }
+          }
+        });
+        event.start = minutesToTime(timeToMinutes(event.start) + travelInfo.shiftAmount);
+        const idx = data.events.findIndex(e => e.id === event.id);
+        if (idx >= 0) data.events[idx] = event;
+      }
+
+      const travelEvent = {
+        id: 'travel_' + Date.now(),
+        date: event.date,
+        studentId: null,
+        type: 'travel',
+        typeLabel: `交通 ${travelInfo.prevHosp} → ${travelInfo.newHosp}`,
+        start: travelInfo.travelStart,
+        duration: 60,
+        note: `自動預留（${travelInfo.prevHosp} → ${travelInfo.newHosp}）`
+      };
+      data.events.push(travelEvent);
+    }
+
+    const conflicts = detectConflicts(event, event.id);
+    if (conflicts.length > 0) {
+      const msg = '發現排程衝突：\n\n' + conflicts.join('\n') + '\n\n仍要儲存嗎？';
+      if (!confirm(msg)) {
+        data.events = data.events.filter(e => e.id !== event.id);
+        return;
+      }
+    }
+
+    save();
+    closeModal('eventModal');
+    renderSchedule();
+  } catch (err) {
+    alert('儲存失敗：' + err.message);
+  }
+}
+
+function closeModal(id) { 
+  const el = document.getElementById(id);
+  if (el) el.classList.remove('show');
+}
+
+function deleteCurrentEvent() {
+  alert('按鈕已點擊');
+  const id = document.getElementById('eventId').value;
+  if (!id) {
+    alert('找不到項目');
+    return;
+  }
+  if (!confirm('確定刪除？')) return;
+  pushHistory();
+  data.events = data.events.filter(e => String(e.id) !== String(id));
+  save();
+  closeModal('eventModal');
+  renderSchedule();
+}
+
+// 滑動刪除
+let touchStartX = 0;
+let currentContainer = null;
+
+document.addEventListener('touchstart', e => {
+  const container = e.target.closest('.swipe-container');
+  if (!container) return;
+  touchStartX = e.touches[0].clientX;
+  currentContainer = container;
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  if (!currentContainer) return;
+  const diff = touchStartX - e.touches[0].clientX;
+  if (diff > 60) currentContainer.classList.add('swiped');
+  else if (diff < -20) currentContainer.classList.remove('swiped');
+}, { passive: true });
+
+document.addEventListener('touchend', () => { currentContainer = null; });
+
+document.addEventListener('click', e => {
+  const delBtn = e.target.closest('.swipe-delete');
+  if (delBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = delBtn.getAttribute('data-id');
+    if (id) deleteEvent(id);
+    return;
+  }
+  if (!e.target.closest('.swipe-container')) {
+    document.querySelectorAll('.swipe-container.swiped').forEach(el => el.classList.remove('swiped'));
+  }
+});
+
+function confirmDeleteFromModal() {
+  const id = document.getElementById('eventId').value;
+  if (!id) return;
+  if (!confirm('確定刪除此項目？')) return;
+  pushHistory();
+  data.events = data.events.filter(e => String(e.id) !== String(id));
+  save();
+  closeModal('eventModal');
+  renderSchedule();
+}
+
+function deleteEvent(id) {
+  if (!id) return;
+  const beforeCount = data.events.length;
+  const ev = data.events.find(e => String(e.id) === String(id));
+  const name = ev ? (ev.typeLabel || '項目') : '項目';
+  
+  if (!confirm('確定刪除「' + name + '」？')) return;
+  
+  pushHistory();
+  data.events = data.events.filter(function(e) {
+    return String(e.id) !== String(id);
+  });
+  
+  const afterCount = data.events.length;
+  save();
+  renderSchedule();
+}
+
+// 綁定刪除（在每次渲染後重新綁定，確保有效）
+function bindDeleteButtons() {
+  document.querySelectorAll('.swipe-delete').forEach(btn => {
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = this.getAttribute('data-id');
+      deleteEvent(id);
+    };
+    btn.ontouchend = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = this.getAttribute('data-id');
+      deleteEvent(id);
+    };
+  });
+}
+
+function renderActivityTypes() {
+  const list = document.getElementById('activity-type-list');
+  if (!list) return;
+  list.innerHTML = data.activityTypes.map(at => `
+    <div class="student-item">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span style="width:16px; height:16px; border-radius:4px; background:${at.color || '#1e88e5'}; display:inline-block;"></span>
+        <div><strong>${at.label}</strong><br><small>預設 ${at.duration} 分鐘</small></div>
+      </div>
+      <div>
+        <button class="btn secondary" style="width:auto; padding:4px 8px;" onclick="openActivityTypeModal('${at.id}')">編輯</button>
+        <button class="btn secondary" style="width:auto; padding:4px 8px;" onclick="deleteActivityType('${at.id}')">刪</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openActivityTypeModal(id) {
+  document.getElementById('activityTypeModalTitle').textContent = id ? '編輯項目' : '新增項目';
+  document.getElementById('atId').value = id || '';
+  if (id) {
+    const at = data.activityTypes.find(a => a.id === id);
+    document.getElementById('atLabel').value = at.label;
+    document.getElementById('atDuration').value = at.duration;
+    document.getElementById('atColor').value = at.color || '#1e88e5';
+  } else {
+    document.getElementById('atLabel').value = '';
+    document.getElementById('atDuration').value = 60;
+    document.getElementById('atColor').value = '#1e88e5';
+  }
+  document.getElementById('activityTypeModal').classList.add('show');
+}
+
+function saveActivityType() {
+  const id = document.getElementById('atId').value || Date.now().toString();
+  const at = {
+    id,
+    label: document.getElementById('atLabel').value.trim(),
+    duration: parseInt(document.getElementById('atDuration').value) || 60,
+    type: 'custom',
+    sub: '',
+    priority: 5,
+    color: document.getElementById('atColor').value || '#1e88e5'
+  };
+  if (!at.label) return alert('請輸入名稱');
+  const idx = data.activityTypes.findIndex(a => a.id === id);
+  if (idx >= 0) data.activityTypes[idx] = at;
+  else data.activityTypes.push(at);
+  save();
+  closeModal('activityTypeModal');
+  renderActivityTypes();
+}
+
+function deleteActivityType(id) {
+  if (!confirm('確定刪除此項目？')) return;
+  data.activityTypes = data.activityTypes.filter(a => a.id !== id);
+  save();
+  renderActivityTypes();
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `nurse_schedule_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      data = JSON.parse(reader.result);
+      save();
+      alert('匯入成功');
+      location.reload();
+    } catch { alert('檔案格式錯誤'); }
+  };
+  reader.readAsText(file);
+}
+
+// 全域錯誤捕捉，方便在手機上看到錯誤
+window.onerror = function(msg, url, line, col, error) {
+  const errDiv = document.getElementById('error-display') || document.createElement('div');
+  errDiv.id = 'error-display';
+  errDiv.style.cssText = 'position:fixed; bottom:80px; left:10px; right:10px; background:#ffebee; color:#c62828; padding:12px; border-radius:8px; font-size:0.85rem; z-index:9999; max-height:120px; overflow:auto;';
+  errDiv.innerHTML = '<strong>錯誤：</strong>' + msg + '<br><small>行 ' + line + '</small>';
+  document.body.appendChild(errDiv);
+  return false;
+};
+
+// 初始化
+try {
+  load();
+  renderStudents();
+  renderActivityTypes();
+  const dateInput = document.getElementById('eDate');
+  if (dateInput) dateInput.valueAsDate = new Date();
+  console.log('App loaded');
+} catch (err) {
+  alert('程式載入錯誤：' + err.message);
+  console.error(err);
+}
+</script>
+</body>
+</html>

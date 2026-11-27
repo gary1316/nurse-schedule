@@ -622,6 +622,72 @@ input[type="date"], input[type="time"] {
   cursor: pointer;
   width: auto;
 }
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 48px;
+  padding: 4px 0;
+}
+.toggle-row .toggle-text { min-width: 0; }
+.toggle-row .toggle-name { display: block; font-size: 1rem; font-weight: 650; color: var(--text); }
+.toggle-row .toggle-state { display: block; font-size: 0.82rem; color: var(--text-muted); margin-top: 2px; }
+.toggle-switch {
+  position: relative;
+  width: 52px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.toggle-switch input[type="checkbox"] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 52px;
+  max-width: 52px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+}
+.toggle-track {
+  display: block;
+  width: 52px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--border);
+  position: relative;
+  pointer-events: none;
+  transition: background 0.2s ease;
+}
+.toggle-switch input[type="checkbox"]:checked + .toggle-track {
+  background: var(--primary);
+}
+.toggle-track::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+.toggle-switch input[type="checkbox"]:checked + .toggle-track::after {
+  transform: translateX(20px);
+}
+.toggle-switch input[type="checkbox"]:focus-visible + .toggle-track {
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
 </style>
 </head>
 <body>
@@ -696,6 +762,20 @@ input[type="date"], input[type="time"] {
     <h3>主題</h3>
     <p class="hint">選擇介面顏色，設定會保存在這部手機。</p>
     <div id="theme-picker" class="theme-grid"></div>
+  </div>
+  <div class="card">
+    <h3>每週規則檢查</h3>
+    <p class="hint">開啟後，時間表會檢查每名實習學生每星期是否出現最少兩次（任何類型），以及同一日是否多於一次，並列出不達標的學生。關閉後不會顯示這些規則。根據更表判斷時間是否衝突的提示不受影響。</p>
+    <div class="toggle-row">
+      <div class="toggle-text">
+        <span class="toggle-name">每週規則檢查</span>
+        <span class="toggle-state" id="weeklyRuleCheckState">已開啟</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="weeklyRuleCheckToggle" checked aria-labelledby="weeklyRuleCheckState" onchange="setWeeklyRuleCheck(this.checked)">
+        <span class="toggle-track"></span>
+      </div>
+    </div>
   </div>
   <div class="card">
     <h3>資料管理</h3>
@@ -857,7 +937,7 @@ input[type="date"], input[type="time"] {
 
 <script>
 const STORAGE_KEY = 'nurse_teacher_v1';
-let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink', rosterSpan: 1 };
+let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink', rosterSpan: 1, weeklyRuleCheck: true };
 
 const HK_TZ = 'Asia/Hong_Kong';
 const EXAM_KEYS = ['AOM', 'AT', 'HFPE'];
@@ -1192,6 +1272,7 @@ function load() {
   if (!data.theme) data.theme = 'pink';
   if (typeof data.weekOffset !== 'number') data.weekOffset = 0;
   if (data.rosterSpan !== 2) data.rosterSpan = 1;
+  if (data.weeklyRuleCheck !== false) data.weeklyRuleCheck = true;
   applyTheme(data.theme, false);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1206,7 +1287,7 @@ function switchTab(tab) {
   if (tab === 'students') renderStudents();
   if (tab === 'schedule') renderSchedule();
   if (tab === 'roster') renderRoster();
-  if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); }
+  if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); renderWeeklyRuleCheckToggle(); }
 }
 
 function renderStudents() {
@@ -1930,37 +2011,65 @@ function getRosterDays() {
   return days;
 }
 
+function isWeeklyRuleCheckEnabled() {
+  return data.weeklyRuleCheck !== false;
+}
+
+function setWeeklyRuleCheck(on) {
+  data.weeklyRuleCheck = !!on;
+  save();
+  renderWeeklyRuleCheckToggle();
+  renderSchedule();
+}
+
+function renderWeeklyRuleCheckToggle() {
+  const input = document.getElementById('weeklyRuleCheckToggle');
+  const state = document.getElementById('weeklyRuleCheckState');
+  const enabled = isWeeklyRuleCheckEnabled();
+  if (input) input.checked = enabled;
+  if (state) state.textContent = enabled ? '已開啟' : '已關閉';
+}
+
 function renderRulePanel(days) {
   if (!data.students.length) return '';
-  const r = checkWeeklyRules(days);
+  const showRules = isWeeklyRuleCheckEnabled();
   const mismatches = findDutyMismatches(days);
-  const ok = r.ok && mismatches.length === 0;
+  if (!showRules && !mismatches.length) return '';
+
   let body = '';
-  if (r.students.length === 0) {
-    body = '<p class="hint">本週沒有仍在實習的學生（實習已於本週開始前結束）。</p>';
-  } else if (r.ok) {
-    body = `<p class="ok-note">本週 ${r.students.length} 位學生均達標：每人都出現最少兩次，而且每日不多於一次。</p>`;
-  } else {
-    const items = [];
-    r.short.forEach(x => {
-      if (x.count === 0) items.push(`<li><strong>${esc(x.student.name)}</strong>：本週尚未編排（0 / 2）</li>`);
-      else items.push(`<li><strong>${esc(x.student.name)}</strong>：本週只出現 ${x.count} 次（尚欠 ${x.needed} 次）</li>`);
-    });
-    r.dailyDup.forEach(x => {
-      items.push(`<li><strong>${esc(x.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(x.date)))} 出現 ${x.count} 次（一日只可 1 次）</li>`);
-    });
-    body = '<p class="hint">規則：每名學生每星期要在你的時間表出現兩次（任何類型都可以），同一日最多一次。</p><ul class="rule-list">' + items.join('') + '</ul>';
+  let rulesOk = true;
+  if (showRules) {
+    const r = checkWeeklyRules(days);
+    rulesOk = r.ok;
+    if (r.students.length === 0) {
+      body = '<p class="hint">本週沒有仍在實習的學生（實習已於本週開始前結束）。</p>';
+    } else if (r.ok) {
+      body = `<p class="ok-note">本週 ${r.students.length} 位學生均達標：每人都出現最少兩次，而且每日不多於一次。</p>`;
+    } else {
+      const items = [];
+      r.short.forEach(x => {
+        if (x.count === 0) items.push(`<li><strong>${esc(x.student.name)}</strong>：本週尚未編排（0 / 2）</li>`);
+        else items.push(`<li><strong>${esc(x.student.name)}</strong>：本週只出現 ${x.count} 次（尚欠 ${x.needed} 次）</li>`);
+      });
+      r.dailyDup.forEach(x => {
+        items.push(`<li><strong>${esc(x.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(x.date)))} 出現 ${x.count} 次（一日只可 1 次）</li>`);
+      });
+      body = '<p class="hint">規則：每名學生每星期要在你的時間表出現兩次（任何類型都可以），同一日最多一次。</p><ul class="rule-list">' + items.join('') + '</ul>';
+    }
   }
   let dutyHtml = '';
   if (mismatches.length) {
-    dutyHtml = '<p class="hint" style="margin-top:10px;">與更表不符：</p><ul class="rule-list">' + mismatches.map(m => {
+    const dutyHead = showRules ? '<p class="hint" style="margin-top:10px;">與更表不符：</p>' : '';
+    dutyHtml = dutyHead + '<ul class="rule-list">' + mismatches.map(m => {
       const t = `${m.event.start} ${m.event.typeLabel || m.event.type}`;
       if (m.reason === 'off') return `<li><strong>${esc(m.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(m.event.date)))} 已排 ${esc(t)}，但當日休息</li>`;
       return `<li><strong>${esc(m.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(m.event.date)))} ${esc(t)} 不在更別內（${esc(formatShift(m.shift))}）</li>`;
     }).join('') + '</ul>';
   }
+  const ok = rulesOk && mismatches.length === 0;
+  const title = showRules ? '本週規則' : '與更表不符';
   return `<div class="rule-panel ${ok ? 'ok' : 'warn'}">
-    <h3>本週規則</h3>
+    <h3>${title}</h3>
     ${body}
     ${dutyHtml}
     <button type="button" class="link-btn" onclick="switchTab('roster')">前往更表／對照</button>
@@ -2487,6 +2596,7 @@ try {
   renderStudents();
   renderActivityTypes();
   renderThemePicker();
+  renderWeeklyRuleCheckToggle();
   const dateInput = document.getElementById('eDate');
   if (dateInput) dateInput.value = todayStr();
   console.log('App loaded');

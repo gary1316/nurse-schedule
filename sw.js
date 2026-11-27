@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v6-ward-rules-shifts';
+const CACHE = 'nurse-schedule-v7-weekly-rule-toggle';
 const ASSETS = [
   './',
   './index.html',

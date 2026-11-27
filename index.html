@@ -484,6 +484,144 @@ input[type="date"], input[type="time"] {
 .theme-option-label { font-size: 0.88rem; }
 .note-muted { color: var(--text-muted); }
 .conflict-note { color: var(--danger); }
+.ok-note { color: var(--ok, #2e7d32); }
+.warn-note { color: var(--warn, #e65100); }
+
+.tabs .tab { padding: 12px 4px 10px; font-size: 0.86rem; }
+.student-item .meta { flex: 1; min-width: 0; }
+.student-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.exam-grid { display: grid; gap: 10px; margin: 4px 0 12px; }
+.exam-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.exam-row > span { font-size: 0.88rem; color: var(--text); font-weight: 600; }
+.exam-row input, .exam-row select { margin: 0; }
+.rule-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 8px 0 14px;
+  box-shadow: var(--card-shadow);
+}
+.rule-panel h3 { margin: 0 0 8px; font-size: 1rem; }
+.rule-panel.ok { border-color: #81c784; background: #f1f8f4; }
+.rule-panel.warn { border-color: #ef9a9a; background: var(--danger-bg); }
+[data-theme="dark"] .rule-panel.ok { background: #1e2a20; border-color: #2e7d32; }
+[data-theme="dark"] .rule-panel.warn { background: var(--danger-bg); }
+.rule-list { margin: 0; padding-left: 18px; font-size: 0.9rem; line-height: 1.55; }
+.rule-list li { margin: 2px 0; }
+.duty-hint {
+  display: none;
+  padding: 10px 12px;
+  border-radius: 12px;
+  margin: 4px 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+}
+.duty-hint.show { display: block; }
+.duty-hint.ok { background: #f1f8f4; border-color: #81c784; color: #1b5e20; }
+.duty-hint.warn { background: var(--danger-bg); border-color: #ef9a9a; color: var(--danger); }
+.duty-hint.muted { color: var(--text-muted); }
+[data-theme="dark"] .duty-hint.ok { background: #1e2a20; color: #a5d6a7; }
+.shift-student-card { margin-bottom: 14px; }
+.shift-days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+@media (max-width: 520px) {
+  .shift-days { grid-template-columns: 1fr 1fr; }
+}
+.shift-day {
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border-radius: 12px;
+  padding: 10px 8px;
+  min-height: 64px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  width: 100%;
+}
+.shift-day:active { background: var(--primary-soft); }
+.shift-day .dlabel { display: block; color: var(--text-muted); font-size: 0.72rem; margin-bottom: 4px; }
+.shift-day .dval { font-weight: 650; }
+.shift-day.off { opacity: 0.75; }
+.shift-day.empty { border-style: dashed; color: var(--text-muted); }
+.shift-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 12px; }
+.shift-type-btn {
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 12px 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.shift-type-btn.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.roster-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.roster-toolbar h3 { margin: 0; flex: 1; min-width: 0; }
+.span-toggle { display: flex; gap: 6px; margin: 8px 0 12px; }
+.span-toggle button {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.span-toggle button.active {
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  border-color: var(--primary);
+}
+.photo-ref { margin: 8px 0 14px; }
+.photo-ref img {
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+}
+.compare-block { margin-top: 6px; font-size: 0.88rem; line-height: 1.5; }
+.compare-day { padding: 6px 0; border-bottom: 1px solid var(--border); }
+.compare-day:last-child { border-bottom: none; }
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  font-size: 0.88rem;
+  font-weight: 650;
+  padding: 0;
+  margin-top: 8px;
+  cursor: pointer;
+  width: auto;
+}
 </style>
 </head>
 <body>
@@ -493,9 +631,10 @@ input[type="date"], input[type="time"] {
 </header>
 
 <div class="tabs">
-  <div class="tab active" onclick="switchTab('students')">學生</div>
-  <div class="tab" onclick="switchTab('schedule')">時間表</div>
-  <div class="tab" onclick="switchTab('settings')">設定</div>
+  <div class="tab active" data-tab="students" onclick="switchTab('students')">學生</div>
+  <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">時間表</div>
+  <div class="tab" data-tab="roster" onclick="switchTab('roster')">更表</div>
+  <div class="tab" data-tab="settings" onclick="switchTab('settings')">設定</div>
 </div>
 
 <div id="view-students" class="container">
@@ -521,6 +660,37 @@ input[type="date"], input[type="time"] {
   <button class="fab" onclick="openEventModal()">+</button>
 </div>
 
+<div id="view-roster" class="container" style="display:none;">
+  <div class="card">
+    <div class="roster-toolbar">
+      <h3 id="roster-title">學生更表</h3>
+      <div class="week-nav">
+        <button class="icon-btn" onclick="changeRosterWeek(-1)" aria-label="上一段">‹</button>
+        <button class="icon-btn" onclick="changeRosterWeek(1)" aria-label="下一段">›</button>
+      </div>
+    </div>
+    <p class="hint">更別是學生當日的上班時間。請每星期或兩星期更新，編排時間表時會對照這些更別。所有資料只存在這部手機。</p>
+    <div class="span-toggle">
+      <button type="button" id="span1Btn" class="active" onclick="setRosterSpan(1)">本週（7日）</button>
+      <button type="button" id="span2Btn" onclick="setRosterSpan(2)">兩星期（14日）</button>
+    </div>
+    <button class="btn secondary" onclick="document.getElementById('rosterPhoto').click()">影相或選擇更表相片（只作對照）</button>
+    <input type="file" id="rosterPhoto" accept="image/*" style="display:none" onchange="showRosterPhoto(event)">
+    <div id="rosterPhotoBox" class="photo-ref" style="display:none;">
+      <img id="rosterPhotoImg" alt="更表相片">
+      <button class="btn secondary" onclick="clearRosterPhoto()">隱藏相片</button>
+    </div>
+    <button class="btn secondary" onclick="openCsvModal()">匯入 CSV 更表</button>
+    <button class="btn secondary" onclick="copyPrevRosterAll()">將上一段更別複製到這段（全部學生）</button>
+  </div>
+  <div id="roster-list"></div>
+  <div class="card">
+    <h3>更表對照時間表</h3>
+    <p class="hint">核對你已編排的訪視，是否落在學生當日更別內。</p>
+    <div id="roster-compare"></div>
+  </div>
+</div>
+
 <div id="view-settings" class="container" style="display:none;">
   <div class="card">
     <h3>主題</h3>
@@ -533,7 +703,6 @@ input[type="date"], input[type="time"] {
     <button class="btn secondary" onclick="exportData()">匯出備份</button>
     <button class="btn secondary" onclick="document.getElementById('importFile').click()">匯入備份</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="btn secondary" onclick="alert('JavaScript 正常運作');">測試按鈕</button>
   </div>
   <div class="card">
     <h3>活動項目管理</h3>
@@ -564,11 +733,44 @@ input[type="date"], input[type="time"] {
       <option value="TWH">東華醫院 TWH</option>
       <option value="GH">葛量洪醫院 GH</option>
     </select>
+    <label>病房</label>
+    <input type="text" id="sWard" placeholder="例如：A8、ICU、8A">
     <label>實習結束日期</label>
     <input type="date" id="sEndDate">
+    <label>考試成績</label>
+    <div class="exam-grid">
+      <div class="exam-row">
+        <span>AOM</span>
+        <input type="text" id="sScoreAOM" placeholder="分數" inputmode="decimal">
+        <select id="sResultAOM">
+          <option value="">未評</option>
+          <option value="PASS">合格 PASS</option>
+          <option value="FAIL">不合格 FAIL</option>
+        </select>
+      </div>
+      <div class="exam-row">
+        <span>AT</span>
+        <input type="text" id="sScoreAT" placeholder="分數" inputmode="decimal">
+        <select id="sResultAT">
+          <option value="">未評</option>
+          <option value="PASS">合格 PASS</option>
+          <option value="FAIL">不合格 FAIL</option>
+        </select>
+      </div>
+      <div class="exam-row">
+        <span>HFPE</span>
+        <input type="text" id="sScoreHFPE" placeholder="分數" inputmode="decimal">
+        <select id="sResultHFPE">
+          <option value="">未評</option>
+          <option value="PASS">合格 PASS</option>
+          <option value="FAIL">不合格 FAIL</option>
+        </select>
+      </div>
+    </div>
     <label>備註</label>
     <textarea id="sNote" rows="2"></textarea>
     <button class="btn" onclick="saveStudent()">儲存</button>
+    <button class="btn secondary" id="studentRosterBtn" style="display:none;" onclick="openRosterFromStudent()">前往填寫更表</button>
   </div>
 </div>
 
@@ -596,18 +798,19 @@ input[type="date"], input[type="time"] {
     <input type="hidden" id="eventId">
     <div id="suggestions" style="margin-bottom:12px;"></div>
     <label>日期</label>
-    <input type="date" id="eDate">
+    <input type="date" id="eDate" onchange="updateDutyHint()">
     <label>學生（可選）</label>
-    <select id="eStudent"><option value="">— 不指定 —</option></select>
+    <select id="eStudent" onchange="updateDutyHint()"><option value="">— 不指定 —</option></select>
+    <div id="dutyHint" class="duty-hint"></div>
     <label>活動項目</label>
     <select id="eType" onchange="onActivityTypeChange()">
       <option value="">— 選擇項目 —</option>
     </select>
     <div id="typeDetails"></div>
     <label>開始時間</label>
-    <input type="time" id="eStart" value="08:30">
+    <input type="time" id="eStart" value="08:30" onchange="updateDutyHint()" oninput="updateDutyHint()">
     <label>時長（分鐘）</label>
-    <input type="number" id="eDuration" value="60" min="15" step="15">
+    <input type="number" id="eDuration" value="60" min="15" step="15" onchange="updateDutyHint()" oninput="updateDutyHint()">
     <label>備註</label>
     <textarea id="eNote" rows="2"></textarea>
     <button class="btn" onclick="saveEvent()">儲存</button>
@@ -615,9 +818,243 @@ input[type="date"], input[type="time"] {
   </div>
 </div>
 
+<!-- 更別選擇 Modal -->
+<div id="shiftModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('shiftModal')">&times;</span>
+    <h2 id="shiftModalTitle">設定更別</h2>
+    <p class="hint" id="shiftModalHint"></p>
+    <div id="shiftTypeButtons" class="shift-type-grid"></div>
+    <div id="shiftCustomTimes">
+      <label>開始時間</label>
+      <input type="time" id="shiftStart">
+      <label>結束時間</label>
+      <input type="time" id="shiftEnd">
+      <p class="hint">夜更可設跨日時間，例如 21:00–07:00。</p>
+    </div>
+    <button class="btn" onclick="saveShiftCell()">儲存</button>
+    <button class="btn secondary" onclick="clearShiftCell()">清除更別</button>
+  </div>
+</div>
+
+<!-- 匯入 CSV Modal -->
+<div id="csvModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('csvModal')">&times;</span>
+    <h2>匯入更表 CSV</h2>
+    <p class="hint">可上載或貼上表格。支援兩種格式：<br>
+      1）學生,日期,更別,開始,結束<br>
+      2）第一欄是日期，其餘欄是學生姓名，格內填更別（例如 A、OFF、07:00-15:00）。<br>
+      系統不會經網絡上載這些檔案，只在這部手機處理。</p>
+    <button class="btn secondary" onclick="downloadCsvTemplate()">下載空白範本</button>
+    <button class="btn secondary" onclick="document.getElementById('csvFile').click()">選擇 CSV 檔</button>
+    <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" style="display:none" onchange="readCsvFile(event)">
+    <label>或在此貼上</label>
+    <textarea id="csvText" rows="8" placeholder="學生,日期,更別,開始,結束"></textarea>
+    <button class="btn" onclick="importRosterCsv()">匯入</button>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'nurse_teacher_v1';
-let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink' };
+let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink', rosterSpan: 1 };
+
+const HK_TZ = 'Asia/Hong_Kong';
+const EXAM_KEYS = ['AOM', 'AT', 'HFPE'];
+const SHIFT_TYPES = [
+  { id: 'A', label: 'A 更（早）', start: '07:00', end: '15:00', off: false },
+  { id: 'P', label: 'P 更（午）', start: '14:00', end: '22:00', off: false },
+  { id: 'N', label: 'N 更（夜）', start: '21:00', end: '07:00', off: false },
+  { id: 'D', label: 'D 更（日）', start: '08:00', end: '16:00', off: false },
+  { id: 'OFF', label: '休息', start: '', end: '', off: true },
+  { id: 'AL', label: '年假 AL', start: '', end: '', off: true },
+  { id: 'SL', label: '病假 SL', start: '', end: '', off: true },
+  { id: 'CUSTOM', label: '自訂時間', start: '', end: '', off: false }
+];
+
+let rosterFocusId = null;
+let pendingShift = { studentId: '', date: '', typeId: '' };
+
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function toDateStr(date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: HK_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(date);
+}
+
+function todayStr() {
+  return toDateStr(new Date());
+}
+
+function dateFromStr(dateStr) {
+  return new Date(String(dateStr) + 'T12:00:00+08:00');
+}
+
+function formatDayLabel(date) {
+  return date.toLocaleDateString('zh-HK', {
+    timeZone: HK_TZ,
+    weekday: 'short',
+    month: 'numeric',
+    day: 'numeric'
+  });
+}
+
+function formatDayRange(start, end) {
+  const opt = { timeZone: HK_TZ, month: 'short', day: 'numeric' };
+  return start.toLocaleDateString('zh-HK', opt) + ' – ' + end.toLocaleDateString('zh-HK', opt);
+}
+
+function emptyExamScores() {
+  const o = {};
+  EXAM_KEYS.forEach(k => { o[k] = { score: '', result: '' }; });
+  return o;
+}
+
+function normalizeExamScores(raw) {
+  const out = emptyExamScores();
+  if (!raw || typeof raw !== 'object') return out;
+  EXAM_KEYS.forEach(k => {
+    const v = raw[k];
+    if (v && typeof v === 'object') {
+      out[k] = {
+        score: v.score == null ? '' : String(v.score),
+        result: (v.result === 'PASS' || v.result === 'FAIL') ? v.result : ''
+      };
+    } else if (v != null && v !== '') {
+      out[k] = { score: String(v), result: '' };
+    }
+  });
+  return out;
+}
+
+function normalizeStudent(s) {
+  if (!s || typeof s !== 'object') return s;
+  s.ward = s.ward || '';
+  s.examScores = normalizeExamScores(s.examScores);
+  if (!s.shifts || typeof s.shifts !== 'object' || Array.isArray(s.shifts)) s.shifts = {};
+  return s;
+}
+
+function examSummary(s) {
+  const sc = normalizeExamScores(s && s.examScores);
+  const parts = [];
+  EXAM_KEYS.forEach(k => {
+    if (!sc[k].score && !sc[k].result) return;
+    let t = k;
+    if (sc[k].score) t += ' ' + sc[k].score;
+    if (sc[k].result === 'PASS') t += ' 合格';
+    if (sc[k].result === 'FAIL') t += ' 不合格';
+    parts.push(t);
+  });
+  return parts.join(' · ');
+}
+
+function formatShift(shift) {
+  if (!shift) return '未輸入';
+  if (shift.off) return shift.label || shift.code || '休息';
+  const time = (shift.start && shift.end) ? (shift.start + '–' + shift.end) : '';
+  const code = (shift.code && shift.code !== 'CUSTOM') ? shift.code : (shift.label && shift.label !== '自訂時間' ? shift.label : '');
+  if (code && time) return code + ' ' + time;
+  return time || code || '已設';
+}
+
+function shiftCoversVisit(shift, startTime, duration) {
+  if (!shift || shift.off) return false;
+  if (!shift.start || !shift.end || !startTime) return false;
+  const shiftStart = timeToMinutes(shift.start);
+  const shiftEnd = timeToMinutes(shift.end);
+  const evStart = timeToMinutes(startTime);
+  const evEnd = evStart + (parseInt(duration, 10) || 0);
+  if (shiftStart === shiftEnd) return true;
+  const overnight = shiftEnd < shiftStart;
+  function covered(m) {
+    const x = ((m % 1440) + 1440) % 1440;
+    if (overnight) return x >= shiftStart || x < shiftEnd;
+    return x >= shiftStart && x < shiftEnd;
+  }
+  if (evEnd <= evStart) return covered(evStart);
+  for (let m = evStart; m < evEnd; m++) {
+    if (!covered(m)) return false;
+  }
+  return true;
+}
+
+function getStudentShift(studentId, dateStr) {
+  const s = data.students.find(x => x.id === studentId);
+  if (!s || !s.shifts) return null;
+  return s.shifts[dateStr] || null;
+}
+
+function setStudentShift(studentId, dateStr, shift) {
+  const s = data.students.find(x => x.id === studentId);
+  if (!s) return;
+  if (!s.shifts || typeof s.shifts !== 'object') s.shifts = {};
+  if (!shift) delete s.shifts[dateStr];
+  else s.shifts[dateStr] = shift;
+}
+
+function weekDateStrs(days) {
+  return days.map(toDateStr);
+}
+
+function studentEventsInWeek(studentId, dateStrs) {
+  return data.events.filter(e => e.studentId === studentId && dateStrs.includes(e.date));
+}
+
+function isStudentActiveInWeek(student, dateStrs) {
+  if (!student.endDate) return true;
+  return student.endDate >= dateStrs[0];
+}
+
+function checkWeeklyRules(days) {
+  const dateStrs = weekDateStrs(days);
+  const students = data.students.filter(s => isStudentActiveInWeek(s, dateStrs));
+  const short = [];
+  const dailyDup = [];
+  students.forEach(s => {
+    const evs = studentEventsInWeek(s.id, dateStrs);
+    if (evs.length < 2) short.push({ student: s, count: evs.length, needed: 2 - evs.length });
+    const byDate = {};
+    evs.forEach(e => {
+      if (!byDate[e.date]) byDate[e.date] = 0;
+      byDate[e.date] += 1;
+    });
+    Object.keys(byDate).forEach(date => {
+      if (byDate[date] > 1) dailyDup.push({ student: s, date, count: byDate[date] });
+    });
+  });
+  return { students, short, dailyDup, ok: short.length === 0 && dailyDup.length === 0 };
+}
+
+function findDutyMismatches(days) {
+  const dateStrs = weekDateStrs(days);
+  const items = [];
+  data.events.forEach(e => {
+    if (!e.studentId || !dateStrs.includes(e.date)) return;
+    const s = data.students.find(x => x.id === e.studentId);
+    if (!s) return;
+    const shift = getStudentShift(e.studentId, e.date);
+    if (!shift) return;
+    if (shift.off) items.push({ student: s, event: e, reason: 'off', shift });
+    else if (shift.start && shift.end && !shiftCoversVisit(shift, e.start, e.duration || 60)) {
+      items.push({ student: s, event: e, reason: 'outside', shift });
+    }
+  });
+  return items;
+}
+
+
 let history = [];
 
 const THEMES = [
@@ -718,8 +1155,6 @@ function highlightDate(dateStr) {
   setTimeout(() => { header.classList.remove('flash-highlight'); }, 800);
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-
 const DEFAULT_ACTIVITY_TYPES = [
   { id: 'exam_aom', label: '考試 · 派藥 AOM', type: 'exam', sub: 'AOM', duration: 90, priority: 1, color: '#e53935' },
   { id: 'coach_aom', label: 'Coaching · 派藥 AOM', type: 'coaching', sub: 'AOM', duration: 30, priority: 2, color: '#fb8c00' },
@@ -737,8 +1172,11 @@ const DEFAULT_ACTIVITY_TYPES = [
 
 function load() {
   const raw = localStorage.getItem(STORAGE_KEY);
-  if (raw) data = JSON.parse(raw);
+  if (raw) {
+    try { data = JSON.parse(raw); } catch (e) { /* keep defaults */ }
+  }
   if (!data.students) data.students = [];
+  data.students = data.students.map(normalizeStudent);
   if (!data.events) data.events = [];
   if (!data.activityTypes || !Array.isArray(data.activityTypes)) {
     data.activityTypes = JSON.parse(JSON.stringify(DEFAULT_ACTIVITY_TYPES));
@@ -752,18 +1190,22 @@ function load() {
     });
   }
   if (!data.theme) data.theme = 'pink';
+  if (typeof data.weekOffset !== 'number') data.weekOffset = 0;
+  if (data.rosterSpan !== 2) data.rosterSpan = 1;
   applyTheme(data.theme, false);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 function switchTab(tab) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-tab') === tab));
   document.getElementById('view-students').style.display = tab === 'students' ? 'block' : 'none';
   document.getElementById('view-schedule').style.display = tab === 'schedule' ? 'block' : 'none';
+  const rosterView = document.getElementById('view-roster');
+  if (rosterView) rosterView.style.display = tab === 'roster' ? 'block' : 'none';
   document.getElementById('view-settings').style.display = tab === 'settings' ? 'block' : 'none';
   if (tab === 'students') renderStudents();
   if (tab === 'schedule') renderSchedule();
+  if (tab === 'roster') renderRoster();
   if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); }
 }
 
@@ -773,32 +1215,47 @@ function renderStudents() {
     list.innerHTML = '<div class="empty">尚未新增學生</div>';
     return;
   }
-  list.innerHTML = data.students.map(s => `
+  list.innerHTML = data.students.map(s => {
+    const exams = examSummary(s);
+    const ward = s.ward ? ' · 病房 ' + s.ward : '';
+    return `
     <div class="student-item">
-      <div>
-        <strong>${s.name}</strong> <span class="badge">${s.hospital}</span><br>
-        <small>${s.class || ''} · 結束：${s.endDate || '未設定'}</small>
+      <div class="meta">
+        <strong>${esc(s.name)}</strong> <span class="badge">${esc(s.hospital || '')}</span><br>
+        <small>${esc(s.class || '')}${esc(ward)} · 結束：${esc(s.endDate || '未設定')}</small>
+        ${exams ? '<br><small>考試：' + esc(exams) + '</small>' : ''}
       </div>
-      <button class="btn secondary" style="width:auto; padding:6px 12px;" onclick="editStudent('${s.id}')">編輯</button>
-    </div>
-  `).join('');
+      <div class="student-actions">
+        <button class="btn secondary" style="width:auto; padding:6px 12px; margin-top:0;" onclick="editStudent('${s.id}')">編輯</button>
+        <button class="btn secondary" style="width:auto; padding:6px 12px; margin-top:0;" onclick="openStudentRoster('${s.id}')">更表</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openStudentModal(id) {
   document.getElementById('studentModalTitle').textContent = id ? '編輯學生' : '新增學生';
   document.getElementById('studentId').value = id || '';
+  const rosterBtn = document.getElementById('studentRosterBtn');
   if (id) {
     const s = data.students.find(x => x.id === id);
     document.getElementById('sName').value = s.name;
     document.getElementById('sClass').value = s.class || '';
     document.getElementById('sHospital').value = s.hospital;
+    document.getElementById('sWard').value = s.ward || '';
     document.getElementById('sEndDate').value = s.endDate || '';
     document.getElementById('sNote').value = s.note || '';
+    fillExamFields(s.examScores);
+    if (rosterBtn) rosterBtn.style.display = 'block';
   } else {
     document.getElementById('sName').value = '';
     document.getElementById('sClass').value = '';
+    document.getElementById('sHospital').value = 'QMH';
+    document.getElementById('sWard').value = '';
     document.getElementById('sEndDate').value = '';
     document.getElementById('sNote').value = '';
+    fillExamFields(null);
+    if (rosterBtn) rosterBtn.style.display = 'none';
   }
   document.getElementById('studentModal').classList.add('show');
 }
@@ -806,14 +1263,25 @@ function editStudent(id) { openStudentModal(id); }
 
 function saveStudent() {
   const id = document.getElementById('studentId').value || Date.now().toString();
-  const student = {
+  const existing = data.students.find(s => s.id === id) || {};
+  const examScores = emptyExamScores();
+  EXAM_KEYS.forEach(k => {
+    examScores[k] = {
+      score: document.getElementById('sScore' + k).value.trim(),
+      result: document.getElementById('sResult' + k).value
+    };
+  });
+  const student = Object.assign({}, existing, {
     id,
     name: document.getElementById('sName').value.trim(),
     class: document.getElementById('sClass').value.trim(),
     hospital: document.getElementById('sHospital').value,
+    ward: document.getElementById('sWard').value.trim(),
     endDate: document.getElementById('sEndDate').value,
-    note: document.getElementById('sNote').value.trim()
-  };
+    note: document.getElementById('sNote').value.trim(),
+    examScores,
+    shifts: existing.shifts && typeof existing.shifts === 'object' ? existing.shifts : {}
+  });
   if (!student.name) return alert('請輸入姓名');
   const idx = data.students.findIndex(s => s.id === id);
   if (idx >= 0) data.students[idx] = student;
@@ -824,13 +1292,15 @@ function saveStudent() {
 }
 
 function getWeekDates(offset = 0) {
-  const today = new Date();
-  const start = new Date(today);
-  start.setDate(today.getDate() - today.getDay() + 1 + offset * 7); // Monday
+  const today = dateFromStr(todayStr());
+  const dow = today.getUTCDay(); // 12:00 HKT is the same weekday in UTC
+  const mondayDiff = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(today);
+  monday.setUTCDate(today.getUTCDate() + mondayDiff + (offset || 0) * 7);
   const days = [];
   for (let i = 0; i < 7; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
+    const d = new Date(monday);
+    d.setUTCDate(monday.getUTCDate() + i);
     days.push(d);
   }
   return days;
@@ -895,11 +1365,11 @@ function renderSchedule() {
   const offset = data.weekOffset || 0;
   const days = getWeekDates(offset);
   const title = document.getElementById('week-title');
-  title.textContent = `${days[0].toLocaleDateString('zh-HK', {month:'short', day:'numeric'})} – ${days[6].toLocaleDateString('zh-HK', {month:'short', day:'numeric'})}`;
+  title.textContent = formatDayRange(days[0], days[6]);
 
-  let html = '';
+  let html = renderRulePanel(days);
   days.forEach(day => {
-    const dateStr = day.toISOString().split('T')[0];
+    const dateStr = toDateStr(day);
     const dayEvents = data.events.filter(e => e.date === dateStr);
     const freeSlots = getFreeSlots(dayEvents);
     const totalFree = freeSlots.reduce((sum, s) => sum + (s.end - s.start), 0);
@@ -932,7 +1402,7 @@ function renderSchedule() {
     timeline.sort((a, b) => a.start - b.start);
 
     html += `<div class="day-header" data-date="${dateStr}">
-      <span>${day.toLocaleDateString('zh-HK', {weekday:'short', month:'numeric', day:'numeric'})}</span>
+      <span>${formatDayLabel(day)}</span>
       <span class="free-total">剩餘 ${formatDuration(totalFree)}</span>
     </div>`;
 
@@ -1111,7 +1581,7 @@ function openEventModal(preDate, preStart, maxDuration, editId) {
     titleEl.textContent = '新增排程';
     summaryEl.style.display = 'none';
     document.getElementById('deleteEventBtn').style.display = 'none';
-    document.getElementById('eDate').value = preDate || new Date().toISOString().split('T')[0];
+    document.getElementById('eDate').value = preDate || todayStr();
     if (preStart) document.getElementById('eStart').value = preStart;
     document.getElementById('eNote').value = '';
     document.getElementById('eStudent').value = '';
@@ -1137,6 +1607,7 @@ function openEventModal(preDate, preStart, maxDuration, editId) {
     document.getElementById('eDuration').removeAttribute('max');
   }
 
+  updateDutyHint();
   document.getElementById('eventModal').classList.add('show');
 }
 
@@ -1161,6 +1632,15 @@ function detectConflicts(event, excludeId = null) {
       conflicts.push(`與「${e.typeLabel || e.type} ${e.start}」時間重疊`);
     }
   });
+
+  if (event.studentId && event.date) {
+    const shift = getStudentShift(event.studentId, event.date);
+    if (shift && shift.off) {
+      conflicts.push('學生當日休息（更表）');
+    } else if (shift && shift.start && shift.end && !shiftCoversVisit(shift, event.start, event.duration || 60)) {
+      conflicts.push(`不在學生更別內（${shift.start}–${shift.end}）`);
+    }
+  }
 
   return conflicts;
 }
@@ -1441,11 +1921,538 @@ function deleteActivityType(id) {
   renderActivityTypes();
 }
 
+
+function getRosterDays() {
+  const offset = data.weekOffset || 0;
+  const span = data.rosterSpan === 2 ? 2 : 1;
+  const days = getWeekDates(offset);
+  if (span === 2) getWeekDates(offset + 1).forEach(d => days.push(d));
+  return days;
+}
+
+function renderRulePanel(days) {
+  if (!data.students.length) return '';
+  const r = checkWeeklyRules(days);
+  const mismatches = findDutyMismatches(days);
+  const ok = r.ok && mismatches.length === 0;
+  let body = '';
+  if (r.students.length === 0) {
+    body = '<p class="hint">本週沒有仍在實習的學生（實習已於本週開始前結束）。</p>';
+  } else if (r.ok) {
+    body = `<p class="ok-note">本週 ${r.students.length} 位學生均達標：每人都出現最少兩次，而且每日不多於一次。</p>`;
+  } else {
+    const items = [];
+    r.short.forEach(x => {
+      if (x.count === 0) items.push(`<li><strong>${esc(x.student.name)}</strong>：本週尚未編排（0 / 2）</li>`);
+      else items.push(`<li><strong>${esc(x.student.name)}</strong>：本週只出現 ${x.count} 次（尚欠 ${x.needed} 次）</li>`);
+    });
+    r.dailyDup.forEach(x => {
+      items.push(`<li><strong>${esc(x.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(x.date)))} 出現 ${x.count} 次（一日只可 1 次）</li>`);
+    });
+    body = '<p class="hint">規則：每名學生每星期要在你的時間表出現兩次（任何類型都可以），同一日最多一次。</p><ul class="rule-list">' + items.join('') + '</ul>';
+  }
+  let dutyHtml = '';
+  if (mismatches.length) {
+    dutyHtml = '<p class="hint" style="margin-top:10px;">與更表不符：</p><ul class="rule-list">' + mismatches.map(m => {
+      const t = `${m.event.start} ${m.event.typeLabel || m.event.type}`;
+      if (m.reason === 'off') return `<li><strong>${esc(m.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(m.event.date)))} 已排 ${esc(t)}，但當日休息</li>`;
+      return `<li><strong>${esc(m.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(m.event.date)))} ${esc(t)} 不在更別內（${esc(formatShift(m.shift))}）</li>`;
+    }).join('') + '</ul>';
+  }
+  return `<div class="rule-panel ${ok ? 'ok' : 'warn'}">
+    <h3>本週規則</h3>
+    ${body}
+    ${dutyHtml}
+    <button type="button" class="link-btn" onclick="switchTab('roster')">前往更表／對照</button>
+  </div>`;
+}
+
+function renderCompareHtml(days) {
+  const dateStrs = weekDateStrs(days);
+  if (!data.students.length) return '<div class="empty">尚未新增學生</div>';
+  return data.students.map(s => {
+    const rows = days.map(d => {
+      const ds = toDateStr(d);
+      const shift = s.shifts && s.shifts[ds];
+      const evs = data.events.filter(e => e.studentId === s.id && e.date === ds);
+      const dayL = formatDayLabel(d);
+      let evText;
+      let cls = '';
+      if (!evs.length) evText = '未排程';
+      else {
+        evText = evs.map(e => {
+          const end = minutesToTime(timeToMinutes(e.start) + (e.duration || 60));
+          let note = `${e.start}–${end} ${e.typeLabel || e.type}`;
+          if (!shift) return note;
+          if (shift.off) { cls = 'conflict-note'; return note + '（當日休息）'; }
+          if (shift.start && shift.end && !shiftCoversVisit(shift, e.start, e.duration || 60)) {
+            cls = 'conflict-note';
+            return note + '（不在更內）';
+          }
+          return note + ' ✓';
+        }).join('、');
+        if (evs.length > 1) {
+          cls = 'conflict-note';
+          evText += '（一日多於 1 次）';
+        } else if (!cls) cls = 'ok-note';
+      }
+      const shiftText = shift ? formatShift(shift) : '未輸入更別';
+      return `<div class="compare-day"><strong>${esc(dayL)}</strong> · 更別：${esc(shiftText)}<br><span class="${cls}">排程：${esc(evText)}</span></div>`;
+    }).join('');
+    const weekNotes = [];
+    for (let i = 0; i < days.length; i += 7) {
+      const n = studentEventsInWeek(s.id, weekDateStrs(days.slice(i, i + 7))).length;
+      weekNotes.push((days.length > 7 ? '第' + (weekNotes.length + 1) + '週 ' : '本週 ') + n + ' 次');
+    }
+    return `<div class="compare-block"><strong>${esc(s.name)}</strong> <span class="hint">${esc(weekNotes.join('，'))}</span>${rows}</div>`;
+  }).join('');
+}
+
+function setRosterSpan(n) {
+  data.rosterSpan = n === 2 ? 2 : 1;
+  save();
+  renderRoster();
+}
+
+function changeRosterWeek(delta) {
+  data.weekOffset = (data.weekOffset || 0) + delta;
+  save();
+  renderRoster();
+}
+
+function renderRoster() {
+  const list = document.getElementById('roster-list');
+  const compare = document.getElementById('roster-compare');
+  if (!list) return;
+  const days = getRosterDays();
+  const title = document.getElementById('roster-title');
+  if (title) title.textContent = formatDayRange(days[0], days[days.length - 1]);
+  const b1 = document.getElementById('span1Btn');
+  const b2 = document.getElementById('span2Btn');
+  if (b1) b1.classList.toggle('active', data.rosterSpan !== 2);
+  if (b2) b2.classList.toggle('active', data.rosterSpan === 2);
+
+  if (data.students.length === 0) {
+    list.innerHTML = '<div class="card"><div class="empty">請先在「學生」頁新增學生，再在此填寫更表。</div></div>';
+    if (compare) compare.innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = data.students.map(s => {
+    const daysHtml = days.map(d => {
+      const ds = toDateStr(d);
+      const shift = s.shifts && s.shifts[ds];
+      const cls = !shift ? ' empty' : (shift.off ? ' off' : '');
+      return `<button type="button" class="shift-day${cls}" onclick="openShiftPicker('${s.id}', '${ds}')">
+        <span class="dlabel">${esc(formatDayLabel(d))}</span>
+        <span class="dval">${esc(shift ? formatShift(shift) : '點擊輸入')}</span>
+      </button>`;
+    }).join('');
+    const ward = s.ward ? ' · 病房 ' + esc(s.ward) : '';
+    return `<div class="card shift-student-card" id="roster-stu-${s.id}">
+      <h3>${esc(s.name)} <span class="badge">${esc(s.hospital || '')}</span></h3>
+      <div class="hint">${esc(s.class || '')}${ward}</div>
+      <div class="shift-days">${daysHtml}</div>
+      <button class="btn secondary" onclick="copyPrevRosterStudent('${s.id}')">複製此學生上一段更別</button>
+    </div>`;
+  }).join('');
+
+  if (compare) compare.innerHTML = renderCompareHtml(days);
+
+  if (rosterFocusId) {
+    const el = document.getElementById('roster-stu-' + rosterFocusId);
+    if (el) {
+      el.classList.add('flash-highlight');
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => { el.classList.remove('flash-highlight'); }, 1200);
+    }
+    rosterFocusId = null;
+  }
+}
+
+function copyShiftsFromPrev(studentIds) {
+  const span = data.rosterSpan === 2 ? 2 : 1;
+  const destDays = getRosterDays();
+  const srcOffset = (data.weekOffset || 0) - span;
+  const srcDays = [];
+  for (let i = 0; i < span; i++) getWeekDates(srcOffset + i).forEach(d => srcDays.push(d));
+  studentIds.forEach(id => {
+    const s = data.students.find(x => x.id === id);
+    if (!s) return;
+    if (!s.shifts) s.shifts = {};
+    srcDays.forEach((src, i) => {
+      const from = toDateStr(src);
+      const to = toDateStr(destDays[i]);
+      if (s.shifts[from]) s.shifts[to] = JSON.parse(JSON.stringify(s.shifts[from]));
+      else delete s.shifts[to];
+    });
+  });
+}
+
+function copyPrevRosterAll() {
+  const n = getRosterDays().length;
+  if (!confirm('將上一段 ' + n + ' 日的更別複製到這段？已填寫的日子會被覆蓋。')) return;
+  copyShiftsFromPrev(data.students.map(s => s.id));
+  save();
+  renderRoster();
+  alert('已複製更別');
+}
+
+function copyPrevRosterStudent(id) {
+  const s = data.students.find(x => x.id === id);
+  if (!s) return;
+  const n = getRosterDays().length;
+  if (!confirm('將「' + s.name + '」上一段 ' + n + ' 日的更別複製到這段？已填寫的日子會被覆蓋。')) return;
+  copyShiftsFromPrev([id]);
+  save();
+  renderRoster();
+}
+
+function openShiftPicker(studentId, dateStr) {
+  const s = data.students.find(x => x.id === studentId);
+  pendingShift = { studentId, date: dateStr, typeId: 'CUSTOM' };
+  document.getElementById('shiftModalTitle').textContent = '設定更別';
+  document.getElementById('shiftModalHint').textContent = (s ? s.name : '') + ' · ' + formatDayLabel(dateFromStr(dateStr));
+  const current = getStudentShift(studentId, dateStr);
+  if (current) {
+    const match = SHIFT_TYPES.find(t => t.id === current.code);
+    pendingShift.typeId = match ? match.id : 'CUSTOM';
+    document.getElementById('shiftStart').value = current.start || '';
+    document.getElementById('shiftEnd').value = current.end || '';
+  } else {
+    document.getElementById('shiftStart').value = '';
+    document.getElementById('shiftEnd').value = '';
+  }
+  renderShiftTypeButtons();
+  document.getElementById('shiftModal').classList.add('show');
+}
+
+function renderShiftTypeButtons() {
+  document.getElementById('shiftTypeButtons').innerHTML = SHIFT_TYPES.map(t =>
+    `<button type="button" class="shift-type-btn${t.id === pendingShift.typeId ? ' active' : ''}" onclick="selectShiftType('${t.id}')">${esc(t.label)}</button>`
+  ).join('');
+}
+
+function selectShiftType(id) {
+  const t = SHIFT_TYPES.find(x => x.id === id);
+  pendingShift.typeId = id;
+  if (t && t.off) {
+    document.getElementById('shiftStart').value = '';
+    document.getElementById('shiftEnd').value = '';
+  } else if (t && t.start && t.end) {
+    document.getElementById('shiftStart').value = t.start;
+    document.getElementById('shiftEnd').value = t.end;
+  }
+  renderShiftTypeButtons();
+}
+
+function saveShiftCell() {
+  const t = SHIFT_TYPES.find(x => x.id === pendingShift.typeId) || SHIFT_TYPES.find(x => x.id === 'CUSTOM');
+  const start = document.getElementById('shiftStart').value;
+  const end = document.getElementById('shiftEnd').value;
+  let shift;
+  if (t.off) {
+    shift = { code: t.id, label: t.label, start: '', end: '', off: true };
+  } else {
+    if (!start || !end) return alert('請填寫開始與結束時間');
+    shift = { code: t.id, label: t.label, start, end, off: false };
+  }
+  setStudentShift(pendingShift.studentId, pendingShift.date, shift);
+  save();
+  closeModal('shiftModal');
+  renderRoster();
+  renderSchedule();
+}
+
+function clearShiftCell() {
+  setStudentShift(pendingShift.studentId, pendingShift.date, null);
+  save();
+  closeModal('shiftModal');
+  renderRoster();
+  renderSchedule();
+}
+
+function showRosterPhoto(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const img = document.getElementById('rosterPhotoImg');
+  const box = document.getElementById('rosterPhotoBox');
+  if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.src = URL.createObjectURL(file);
+  box.style.display = 'block';
+  e.target.value = '';
+}
+
+function clearRosterPhoto() {
+  const img = document.getElementById('rosterPhotoImg');
+  if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+  img.removeAttribute('src');
+  document.getElementById('rosterPhotoBox').style.display = 'none';
+}
+
+function openCsvModal() {
+  document.getElementById('csvText').value = '';
+  document.getElementById('csvFile').value = '';
+  document.getElementById('csvModal').classList.add('show');
+}
+
+function readCsvFile(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('csvText').value = String(reader.result || '');
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function downloadCsvTemplate() {
+  const days = getRosterDays();
+  const names = data.students.length ? data.students.map(s => s.name) : ['陳小明'];
+  const lines = ['學生,日期,更別,開始,結束'];
+  names.forEach(name => {
+    days.forEach((d, i) => {
+      if (i % 7 >= 5) lines.push(`${name},${toDateStr(d)},OFF,,`);
+      else lines.push(`${name},${toDateStr(d)},A,07:00,15:00`);
+    });
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = '更表範本_' + todayStr() + '.csv';
+  a.click();
+}
+
+function normalizeTimeCell(s) {
+  const m = String(s || '').trim().match(/^(\d{1,2})[:：.](\d{2})$/);
+  if (!m) return '';
+  return String(m[1]).padStart(2, '0') + ':' + m[2];
+}
+
+function normalizeDateCell(s) {
+  s = String(s || '').trim();
+  let m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (m) return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
+  m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+  if (m) {
+    const a = +m[1], b = +m[2], y = m[3];
+    let day, month;
+    if (a > 12) { day = a; month = b; }
+    else if (b > 12) { month = a; day = b; }
+    else { day = a; month = b; }
+    return y + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+  return '';
+}
+
+function parseCsv(text) {
+  text = String(text || '').replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const first = (text.split('\n').find(l => l.trim()) || '');
+  const commas = (first.match(/,/g) || []).length;
+  const semis = (first.match(/;/g) || []).length;
+  const tabs = (first.match(/\t/g) || []).length;
+  let delim = ',';
+  if (tabs >= commas && tabs >= semis && tabs > 0) delim = '\t';
+  else if (semis > commas) delim = ';';
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { cur += '"'; i++; }
+        else inQ = false;
+      } else cur += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === delim) { row.push(cur); cur = ''; }
+    else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+    else cur += ch;
+  }
+  if (cur.length || row.length) { row.push(cur); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function matchStudentByName(name) {
+  const n = String(name || '').trim();
+  if (!n) return null;
+  const exact = data.students.filter(s => s.name === n);
+  if (exact.length === 1) return exact[0];
+  const ci = data.students.filter(s => s.name && s.name.toLowerCase() === n.toLowerCase());
+  if (ci.length === 1) return ci[0];
+  const inc = data.students.filter(s => s.name && (s.name.includes(n) || n.includes(s.name)));
+  if (inc.length === 1) return inc[0];
+  return null;
+}
+
+function interpretShift(code, start, end) {
+  const raw = String(code || '').trim();
+  const range = raw.match(/(\d{1,2}[:：.]\d{2})\s*[-–—~～至到]\s*(\d{1,2}[:：.]\d{2})/);
+  const startVal = normalizeTimeCell(start) || (range ? normalizeTimeCell(range[1]) : '');
+  const endVal = normalizeTimeCell(end) || (range ? normalizeTimeCell(range[2]) : '');
+  const codeOnly = raw.replace(/(\d{1,2}[:：.]\d{2})\s*[-–—~～至到]\s*(\d{1,2}[:：.]\d{2})/, '').trim().toUpperCase();
+  const token = codeOnly || raw.toUpperCase();
+  if (['OFF', 'REST', 'O', '休息', '休假', '假'].includes(token) || ['OFF', '休息', '休假'].includes(raw.toUpperCase())) {
+    return { code: 'OFF', label: '休息', start: '', end: '', off: true };
+  }
+  if (['AL', '年假'].includes(token)) return { code: 'AL', label: '年假 AL', start: '', end: '', off: true };
+  if (['SL', 'ML', '病假'].includes(token)) return { code: 'SL', label: '病假 SL', start: '', end: '', off: true };
+  const found = SHIFT_TYPES.find(t => !t.off && t.id === token);
+  if (found) {
+    return { code: found.id, label: found.label, start: startVal || found.start, end: endVal || found.end, off: false };
+  }
+  if (startVal && endVal) {
+    return { code: token || 'CUSTOM', label: token || '自訂時間', start: startVal, end: endVal, off: false };
+  }
+  if (raw) return { code: token || 'CUSTOM', label: raw, start: startVal, end: endVal, off: false };
+  return null;
+}
+
+function parseRosterCsv(text) {
+  const rows = parseCsv(text);
+  if (rows.length < 2) return { error: '沒有資料列。請包含標題列與最少一列資料。', entries: [], warnings: [] };
+  const header = rows[0].map(h => String(h).trim());
+  const norm = h => h.replace(/\s/g, '').toLowerCase();
+  const hnorm = header.map(norm);
+  const idxOf = names => hnorm.findIndex(h => names.includes(h));
+  const studentIdx = idxOf(['學生', '姓名', '學生姓名', 'name', 'student', 'studentname']);
+  const dateIdx = idxOf(['日期', 'date', '日', '日期date']);
+  const shiftIdx = idxOf(['更別', '更', '班別', 'shift', 'duty', 'dutycode']);
+  const startIdx = idxOf(['開始', '開始時間', '上班', 'start', 'from']);
+  const endIdx = idxOf(['結束', '結束時間', '下班', 'end', 'to']);
+  const entries = [];
+  const warnings = [];
+  const warnOnce = new Set();
+  function warn(msg) {
+    if (warnOnce.has(msg)) return;
+    warnOnce.add(msg);
+    warnings.push(msg);
+  }
+
+  if (studentIdx >= 0 && dateIdx >= 0) {
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const name = String(r[studentIdx] || '').trim();
+      const date = normalizeDateCell(r[dateIdx] || '');
+      if (!name && !date) continue;
+      if (!name || !date) { warn('第 ' + (i + 1) + ' 列無法辨識學生或日期'); continue; }
+      const student = matchStudentByName(name);
+      if (!student) { warn('找不到學生「' + name + '」'); continue; }
+      const parsed = interpretShift(r[shiftIdx] || '', startIdx >= 0 ? r[startIdx] : '', endIdx >= 0 ? r[endIdx] : '');
+      if (!parsed) { warn('第 ' + (i + 1) + ' 列沒有更別'); continue; }
+      entries.push({ studentId: student.id, name: student.name, date, shift: parsed });
+    }
+  } else if (dateIdx >= 0 || hnorm[0] === '日期' || hnorm[0] === 'date') {
+    const di = dateIdx >= 0 ? dateIdx : 0;
+    const nameCols = header.map((h, i) => ({ h, i })).filter(x => x.i !== di && String(x.h).trim());
+    nameCols.forEach(({ h }) => {
+      if (!matchStudentByName(h)) warn('找不到學生「' + h + '」');
+    });
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      const date = normalizeDateCell(r[di] || '');
+      if (!date) { warn('第 ' + (i + 1) + ' 列無法辨識日期'); continue; }
+      nameCols.forEach(({ h, i: ci }) => {
+        const raw = String(r[ci] || '').trim();
+        if (!raw) return;
+        const student = matchStudentByName(h);
+        if (!student) return;
+        const parsed = interpretShift(raw, '', '');
+        if (!parsed) return;
+        entries.push({ studentId: student.id, name: student.name, date, shift: parsed });
+      });
+    }
+  } else {
+    return { error: '無法識別 CSV 格式。請使用「學生,日期,更別,開始,結束」，或第一欄為日期、其餘欄為學生姓名。', entries: [], warnings: [] };
+  }
+  return { entries, warnings, error: null };
+}
+
+function importRosterCsv() {
+  const text = document.getElementById('csvText').value;
+  const result = parseRosterCsv(text);
+  if (result.error) return alert(result.error);
+  if (!result.entries.length) {
+    return alert('沒有可匯入的資料' + (result.warnings.length ? '：\n' + result.warnings.slice(0, 8).join('\n') : ''));
+  }
+  let msg = '即將寫入 ' + result.entries.length + ' 筆更別。';
+  if (result.warnings.length) msg += '\n\n注意：\n' + result.warnings.slice(0, 10).join('\n');
+  msg += '\n\n確定匯入？已有更別的日子會被覆蓋。';
+  if (!confirm(msg)) return;
+  result.entries.forEach(en => setStudentShift(en.studentId, en.date, en.shift));
+  save();
+  closeModal('csvModal');
+  renderRoster();
+  renderSchedule();
+  alert('已匯入更表');
+}
+
+function updateDutyHint() {
+  const el = document.getElementById('dutyHint');
+  if (!el) return;
+  const sid = document.getElementById('eStudent').value;
+  const date = document.getElementById('eDate').value;
+  const start = document.getElementById('eStart').value;
+  const duration = parseInt(document.getElementById('eDuration').value, 10) || 60;
+  if (!sid || !date) {
+    el.className = 'duty-hint';
+    el.textContent = '';
+    return;
+  }
+  const s = data.students.find(x => x.id === sid);
+  const shift = getStudentShift(sid, date);
+  const ward = s && s.ward ? ' · 病房 ' + s.ward : '';
+  const name = s ? s.name : '學生';
+  if (!shift) {
+    el.className = 'duty-hint show muted';
+    el.textContent = name + ward + '：這天尚未輸入更別。可到「更表」頁填寫。';
+    return;
+  }
+  if (shift.off) {
+    el.className = 'duty-hint show warn';
+    el.textContent = name + ward + '：當日' + (shift.label || '休息') + '，不在更。';
+    return;
+  }
+  const label = formatShift(shift);
+  if (start && shift.start && shift.end) {
+    if (shiftCoversVisit(shift, start, duration)) {
+      el.className = 'duty-hint show ok';
+      el.textContent = name + ward + '：當日更別 ' + label + '。預計時間在更內。';
+    } else {
+      el.className = 'duty-hint show warn';
+      const end = minutesToTime(timeToMinutes(start) + duration);
+      el.textContent = name + ward + '：當日更別 ' + label + '。預計 ' + start + '–' + end + ' 不在更內。';
+    }
+  } else {
+    el.className = 'duty-hint show muted';
+    el.textContent = name + ward + '：當日更別 ' + label;
+  }
+}
+
+function openRosterFromStudent() {
+  const id = document.getElementById('studentId').value;
+  closeModal('studentModal');
+  openStudentRoster(id);
+}
+
+function openStudentRoster(id) {
+  rosterFocusId = id || null;
+  switchTab('roster');
+}
+
+function fillExamFields(scores) {
+  const sc = normalizeExamScores(scores);
+  EXAM_KEYS.forEach(k => {
+    document.getElementById('sScore' + k).value = sc[k].score;
+    document.getElementById('sResult' + k).value = sc[k].result;
+  });
+}
+
+
 function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `nurse_schedule_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `nurse_schedule_backup_${todayStr()}.json`;
   a.click();
 }
 
@@ -1481,7 +2488,7 @@ try {
   renderActivityTypes();
   renderThemePicker();
   const dateInput = document.getElementById('eDate');
-  if (dateInput) dateInput.valueAsDate = new Date();
+  if (dateInput) dateInput.value = todayStr();
   console.log('App loaded');
 } catch (err) {
   alert('程式載入錯誤：' + err.message);

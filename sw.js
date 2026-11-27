@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v5-themed-free';
+const CACHE = 'nurse-schedule-v6-ward-rules-shifts';
 const ASSETS = [
   './',
   './index.html',

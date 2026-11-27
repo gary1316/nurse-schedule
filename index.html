@@ -499,6 +499,27 @@ input[type="date"], input[type="time"] {
 }
 .exam-row > span { font-size: 0.88rem; color: var(--text); font-weight: 600; }
 .exam-row input, .exam-row select { margin: 0; }
+.shift-default-head, .shift-default-row {
+  display: grid;
+  grid-template-columns: 88px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+.shift-default-head {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.shift-default-row { margin: 6px 0; }
+.shift-default-row > span { font-size: 0.88rem; color: var(--text); font-weight: 600; }
+.shift-default-row input { margin: 0; }
+.shift-type-btn small {
+  display: block;
+  font-weight: 500;
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-top: 2px;
+}
 .rule-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -791,6 +812,13 @@ input[type="date"], input[type="time"] {
     </div>
   </div>
   <div class="card">
+    <h3>更別預設時間</h3>
+    <p class="hint">選擇 A、P、N、D 更時會自動填入這些時間。已儲存在更表上的日子不會自動更改。夜更可設跨日時間，例如 21:00–07:00（結束早於開始即視為跨日）。休息、年假、病假沒有上班時間。</p>
+    <div id="shift-defaults-editor"></div>
+    <button class="btn" onclick="saveShiftDefaults()">儲存更別時間</button>
+    <button class="btn secondary" onclick="restoreShiftDefaults()">恢復原本時間</button>
+  </div>
+  <div class="card">
     <h3>資料管理</h3>
     <p class="hint">所有資料只存在這部手機（完全離線）。</p>
     <button class="btn secondary" onclick="exportData()">匯出備份</button>
@@ -964,6 +992,41 @@ const SHIFT_TYPES = [
   { id: 'SL', label: '病假 SL', start: '', end: '', off: true },
   { id: 'CUSTOM', label: '自訂時間', start: '', end: '', off: false }
 ];
+
+const TIMED_SHIFT_IDS = SHIFT_TYPES.filter(t => !t.off && t.id !== 'CUSTOM').map(t => t.id);
+
+function defaultShiftHours() {
+  const o = {};
+  TIMED_SHIFT_IDS.forEach(id => {
+    const t = SHIFT_TYPES.find(x => x.id === id);
+    o[id] = { start: t.start, end: t.end };
+  });
+  return o;
+}
+
+function normalizeShiftDefaults(raw) {
+  const out = defaultShiftHours();
+  if (!raw || typeof raw !== 'object') return out;
+  TIMED_SHIFT_IDS.forEach(id => {
+    const v = raw[id];
+    if (!v || typeof v !== 'object') return;
+    const start = normalizeTimeCell(v.start);
+    const end = normalizeTimeCell(v.end);
+    if (start && end) out[id] = { start, end };
+  });
+  return out;
+}
+
+function getShiftType(id) {
+  const base = SHIFT_TYPES.find(t => t.id === id);
+  if (!base) return null;
+  if (base.off || base.id === 'CUSTOM') return Object.assign({}, base);
+  const hours = data.shiftDefaults && data.shiftDefaults[id];
+  return Object.assign({}, base, {
+    start: (hours && hours.start) || base.start,
+    end: (hours && hours.end) || base.end
+  });
+}
 
 let rosterFocusId = null;
 let pendingShift = { studentId: '', date: '', typeId: '' };
@@ -1290,6 +1353,7 @@ function load() {
     if (typeof data.weeklyRuleMinTwice !== 'boolean') data.weeklyRuleMinTwice = legacyOn;
     if (typeof data.weeklyRuleOncePerDay !== 'boolean') data.weeklyRuleOncePerDay = legacyOn;
   }
+  data.shiftDefaults = normalizeShiftDefaults(data.shiftDefaults);
   applyTheme(data.theme, false);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1304,7 +1368,7 @@ function switchTab(tab) {
   if (tab === 'students') renderStudents();
   if (tab === 'schedule') renderSchedule();
   if (tab === 'roster') renderRoster();
-  if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); renderWeeklyRuleCheckToggle(); }
+  if (tab === 'settings') { renderActivityTypes(); renderThemePicker(); renderWeeklyRuleCheckToggle(); renderShiftDefaultsEditor(); }
 }
 
 function renderStudents() {
@@ -2294,6 +2358,48 @@ function copyPrevRosterStudent(id) {
   renderRoster();
 }
 
+function timedShiftTypes() {
+  return TIMED_SHIFT_IDS.map(id => getShiftType(id));
+}
+
+function renderShiftDefaultsEditor() {
+  const el = document.getElementById('shift-defaults-editor');
+  if (!el) return;
+  el.innerHTML = '<div class="shift-default-head"><span></span><span>開始</span><span>結束</span></div>' +
+    timedShiftTypes().map(t => `
+      <div class="shift-default-row">
+        <span>${esc(t.label)}</span>
+        <input type="time" id="shiftDefStart${t.id}" value="${esc(t.start)}" aria-label="${esc(t.label)}開始時間">
+        <input type="time" id="shiftDefEnd${t.id}" value="${esc(t.end)}" aria-label="${esc(t.label)}結束時間">
+      </div>`).join('');
+}
+
+function saveShiftDefaults() {
+  const next = {};
+  for (const id of TIMED_SHIFT_IDS) {
+    const startEl = document.getElementById('shiftDefStart' + id);
+    const endEl = document.getElementById('shiftDefEnd' + id);
+    const start = startEl ? normalizeTimeCell(startEl.value) : '';
+    const end = endEl ? normalizeTimeCell(endEl.value) : '';
+    if (!start || !end) {
+      const t = SHIFT_TYPES.find(x => x.id === id);
+      return alert('請為「' + (t ? t.label : id) + '」填寫開始與結束時間');
+    }
+    next[id] = { start, end };
+  }
+  data.shiftDefaults = next;
+  save();
+  renderShiftDefaultsEditor();
+  alert('已儲存更別預設時間。已填寫在更表上的日子維持原來的時間，不會自動更改。');
+}
+
+function restoreShiftDefaults() {
+  if (!confirm('恢復 A、P、N、D 更的原本時間？已填寫在更表上的日子不會更改。')) return;
+  data.shiftDefaults = defaultShiftHours();
+  save();
+  renderShiftDefaultsEditor();
+}
+
 function openShiftPicker(studentId, dateStr) {
   const s = data.students.find(x => x.id === studentId);
   pendingShift = { studentId, date: dateStr, typeId: 'CUSTOM' };
@@ -2314,13 +2420,17 @@ function openShiftPicker(studentId, dateStr) {
 }
 
 function renderShiftTypeButtons() {
-  document.getElementById('shiftTypeButtons').innerHTML = SHIFT_TYPES.map(t =>
-    `<button type="button" class="shift-type-btn${t.id === pendingShift.typeId ? ' active' : ''}" onclick="selectShiftType('${t.id}')">${esc(t.label)}</button>`
-  ).join('');
+  document.getElementById('shiftTypeButtons').innerHTML = SHIFT_TYPES.map(t => {
+    const resolved = getShiftType(t.id);
+    const hours = (resolved && !resolved.off && t.id !== 'CUSTOM' && resolved.start && resolved.end)
+      ? `<small>${esc(resolved.start)}–${esc(resolved.end)}</small>`
+      : '';
+    return `<button type="button" class="shift-type-btn${t.id === pendingShift.typeId ? ' active' : ''}" onclick="selectShiftType('${t.id}')">${esc(t.label)}${hours}</button>`;
+  }).join('');
 }
 
 function selectShiftType(id) {
-  const t = SHIFT_TYPES.find(x => x.id === id);
+  const t = getShiftType(id);
   pendingShift.typeId = id;
   if (t && t.off) {
     document.getElementById('shiftStart').value = '';
@@ -2333,7 +2443,7 @@ function selectShiftType(id) {
 }
 
 function saveShiftCell() {
-  const t = SHIFT_TYPES.find(x => x.id === pendingShift.typeId) || SHIFT_TYPES.find(x => x.id === 'CUSTOM');
+  const t = getShiftType(pendingShift.typeId) || getShiftType('CUSTOM');
   const start = document.getElementById('shiftStart').value;
   const end = document.getElementById('shiftEnd').value;
   let shift;
@@ -2399,7 +2509,10 @@ function downloadCsvTemplate() {
   names.forEach(name => {
     days.forEach((d, i) => {
       if (i % 7 >= 5) lines.push(`${name},${toDateStr(d)},OFF,,`);
-      else lines.push(`${name},${toDateStr(d)},A,07:00,15:00`);
+      else {
+        const a = getShiftType('A');
+        lines.push(`${name},${toDateStr(d)},A,${a.start},${a.end}`);
+      }
     });
   });
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -2482,8 +2595,8 @@ function interpretShift(code, start, end) {
   }
   if (['AL', '年假'].includes(token)) return { code: 'AL', label: '年假 AL', start: '', end: '', off: true };
   if (['SL', 'ML', '病假'].includes(token)) return { code: 'SL', label: '病假 SL', start: '', end: '', off: true };
-  const found = SHIFT_TYPES.find(t => !t.off && t.id === token);
-  if (found) {
+  const found = getShiftType(token);
+  if (found && !found.off && found.id !== 'CUSTOM') {
     return { code: found.id, label: found.label, start: startVal || found.start, end: endVal || found.end, off: false };
   }
   if (startVal && endVal) {
@@ -2674,6 +2787,7 @@ try {
   renderActivityTypes();
   renderThemePicker();
   renderWeeklyRuleCheckToggle();
+  renderShiftDefaultsEditor();
   const dateInput = document.getElementById('eDate');
   if (dateInput) dateInput.value = todayStr();
   console.log('App loaded');

@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v9-edit-prefill-hosp-ward';
+const CACHE = 'nurse-schedule-v10-shift-default-hours';
 const ASSETS = [
   './',
   './index.html',

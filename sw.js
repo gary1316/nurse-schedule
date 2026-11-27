@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v8-split-rule-toggles';
+const CACHE = 'nurse-schedule-v9-edit-prefill-hosp-ward';
 const ASSETS = [
   './',
   './index.html',

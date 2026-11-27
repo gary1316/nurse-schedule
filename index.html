@@ -1522,7 +1522,7 @@ function renderSchedule() {
               <div class="info">
                 <div style="font-weight:600;">${e.start}–${end}</div>
                 <div style="color:${color}; font-weight:600;">${e.typeLabel || e.type}</div>
-                <small class="note-muted">${stu ? stu.name : ''}${e.note ? ' · ' + e.note : ''}</small>
+                <small class="note-muted">${esc(formatStudentMeta(stu))}${e.note ? (stu ? ' · ' : '') + esc(e.note) : ''}</small>
               </div>
             </div>
             <button class="swipe-delete" data-id="${e.id}" type="button">刪除</button>
@@ -1626,11 +1626,34 @@ function applySuggestion(type, sub, duration) {
   document.getElementById('suggestions').style.display = 'none';
 }
 
-function populateActivityTypeSelect(selectedId) {
+function populateActivityTypeSelect(selectedId, extraLabel) {
   const sel = document.getElementById('eType');
+  const ids = new Set((data.activityTypes || []).map(at => String(at.id)));
   sel.innerHTML = '<option value="">— 選擇項目 —</option>' +
-    data.activityTypes.map(at => `<option value="${at.id}">${at.label}</option>`).join('');
-  if (selectedId) sel.value = selectedId;
+    data.activityTypes.map(at => `<option value="${esc(at.id)}">${esc(at.label)}</option>`).join('');
+  if (selectedId && !ids.has(String(selectedId))) {
+    const opt = document.createElement('option');
+    opt.value = String(selectedId);
+    opt.textContent = extraLabel || selectedId;
+    sel.appendChild(opt);
+  }
+  if (selectedId) sel.value = String(selectedId);
+}
+
+function formatStudentMeta(stu) {
+  if (!stu) return '';
+  const parts = [];
+  if (stu.name) parts.push(stu.name);
+  if (stu.hospital) parts.push(stu.hospital);
+  if (stu.ward) parts.push('病房 ' + stu.ward);
+  return parts.join(' · ');
+}
+
+function matchActivityType(ev) {
+  if (!ev) return null;
+  let matched = data.activityTypes.find(a => String(a.id) === String(ev.type));
+  if (!matched && ev.typeLabel) matched = data.activityTypes.find(a => a.label === ev.typeLabel);
+  return matched || null;
 }
 
 function onActivityTypeChange() {
@@ -1642,37 +1665,44 @@ function onActivityTypeChange() {
 }
 
 function openEventModal(preDate, preStart, maxDuration, editId) {
-  const sel = document.getElementById('eStudent');
-  sel.innerHTML = '<option value="">— 不指定 —</option>' + data.students.map(s => `<option value="${s.id}">${s.name} (${s.hospital})</option>`).join('');
+  const studentSel = document.getElementById('eStudent');
+  studentSel.innerHTML = '<option value="">— 不指定 —</option>' + data.students.map(s => `<option value="${esc(s.id)}">${esc(s.name)}${s.hospital ? ' (' + esc(s.hospital) + ')' : ''}</option>`).join('');
 
   document.getElementById('eventId').value = editId || '';
   const titleEl = document.getElementById('eventModalTitle');
   const summaryEl = document.getElementById('editSummary');
+  let selectedTypeId = '';
+  let extraTypeLabel = '';
 
   if (editId) {
     titleEl.textContent = '編輯中';
     document.getElementById('deleteEventBtn').style.display = 'block';
-    const ev = data.events.find(e => e.id === editId);
+    const ev = data.events.find(e => String(e.id) === String(editId));
     if (ev) {
-      const stu = data.students.find(s => s.id === ev.studentId);
+      const stu = data.students.find(s => String(s.id) === String(ev.studentId));
       summaryEl.style.display = 'block';
       summaryEl.innerHTML = `
         <strong>正在編輯：</strong><br>
-        ${ev.start} · ${ev.typeLabel || ev.type}<br>
-        <small>${stu ? stu.name + ' (' + stu.hospital + ')' : '未指定學生'} ${ev.note ? '· ' + ev.note : ''}</small>
+        ${esc(ev.start)} · ${esc(ev.typeLabel || ev.type)}<br>
+        <small>${esc(stu ? formatStudentMeta(stu) : '未指定學生')}${ev.note ? ' · ' + esc(ev.note) : ''}</small>
       `;
-      document.getElementById('eDate').value = ev.date;
-      document.getElementById('eStart').value = ev.start;
+      document.getElementById('eDate').value = ev.date || '';
+      document.getElementById('eStart').value = ev.start || '';
       document.getElementById('eDuration').value = ev.duration || 60;
       document.getElementById('eNote').value = ev.note || '';
-      document.getElementById('eStudent').value = ev.studentId || '';
-      
-      // 填入活動項目
-      populateActivityTypeSelect();
-      let matched = data.activityTypes.find(a => a.id === ev.type);
-      if (!matched) matched = data.activityTypes.find(a => a.label === ev.typeLabel);
+      if (ev.studentId && !data.students.some(s => String(s.id) === String(ev.studentId))) {
+        const opt = document.createElement('option');
+        opt.value = String(ev.studentId);
+        opt.textContent = '（原指定學生已不在名單）';
+        studentSel.appendChild(opt);
+      }
+      studentSel.value = ev.studentId ? String(ev.studentId) : '';
+      const matched = matchActivityType(ev);
       if (matched) {
-        document.getElementById('eType').value = matched.id;
+        selectedTypeId = matched.id;
+      } else if (ev.type || ev.typeLabel) {
+        selectedTypeId = ev.type || ev.typeLabel;
+        extraTypeLabel = ev.typeLabel || ev.type;
       }
     }
   } else {
@@ -1680,13 +1710,13 @@ function openEventModal(preDate, preStart, maxDuration, editId) {
     summaryEl.style.display = 'none';
     document.getElementById('deleteEventBtn').style.display = 'none';
     document.getElementById('eDate').value = preDate || todayStr();
-    if (preStart) document.getElementById('eStart').value = preStart;
+    document.getElementById('eStart').value = preStart || '08:30';
+    document.getElementById('eDuration').value = 60;
     document.getElementById('eNote').value = '';
-    document.getElementById('eStudent').value = '';
-    document.getElementById('eType').value = '';
+    studentSel.value = '';
   }
 
-  populateActivityTypeSelect();
+  populateActivityTypeSelect(selectedTypeId, extraTypeLabel);
 
   const suggestionsDiv = document.getElementById('suggestions');
   suggestionsDiv.style.display = editId ? 'none' : 'block';

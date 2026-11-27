@@ -490,6 +490,52 @@ input[type="date"], input[type="time"] {
 .tabs .tab { padding: 12px 4px 10px; font-size: 0.86rem; }
 .student-item .meta { flex: 1; min-width: 0; }
 .student-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.badge-done {
+  background: var(--primary);
+  color: #fff;
+  margin-left: 6px;
+}
+.shift-day {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.shift-save-status {
+  font-size: 0.88rem;
+  color: var(--primary-dark);
+  min-height: 1.3em;
+  margin: 8px 0 0;
+}
+.clear-shift-wrap { text-align: center; margin-top: 20px; }
+.clear-shift-link {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.84rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  width: auto;
+  padding: 10px 12px;
+  margin: 0;
+}
+.clear-shift-link:active { color: var(--danger); }
+.summary-preview-wrap {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  margin: 8px 0 12px;
+  text-align: center;
+}
+.summary-preview-wrap img {
+  width: 100%;
+  max-height: 58vh;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--surface);
+}
 .exam-grid { display: grid; gap: 10px; margin: 4px 0 12px; }
 .exam-row {
   display: grid;
@@ -759,7 +805,7 @@ input[type="date"], input[type="time"] {
         <button class="icon-btn" onclick="changeRosterWeek(1)" aria-label="下一段">›</button>
       </div>
     </div>
-    <p class="hint">更別是學生當日的上班時間。請每星期或兩星期更新，編排時間表時會對照這些更別。所有資料只存在這部手機。</p>
+    <p class="hint">更別是學生當日的上班時間。請每星期或兩星期更新，編排時間表時會對照這些更別。點選日期再點更別即會儲存；長按日期可清除該日更別。所有資料只存在這部手機。</p>
     <div class="span-toggle">
       <button type="button" id="span1Btn" class="active" onclick="setRosterSpan(1)">本週（7日）</button>
       <button type="button" id="span2Btn" onclick="setRosterSpan(2)">兩星期（14日）</button>
@@ -892,6 +938,7 @@ input[type="date"], input[type="time"] {
     <textarea id="sNote" rows="2"></textarea>
     <button class="btn" onclick="saveStudent()">儲存</button>
     <button class="btn secondary" id="studentRosterBtn" style="display:none;" onclick="openRosterFromStudent()">前往填寫更表</button>
+    <button class="btn secondary" id="studentSummaryBtn" style="display:none;" onclick="openStudentSummary(document.getElementById('studentId').value)">匯出實習總結</button>
   </div>
 </div>
 
@@ -948,13 +995,16 @@ input[type="date"], input[type="time"] {
     <div id="shiftTypeButtons" class="shift-type-grid"></div>
     <div id="shiftCustomTimes">
       <label>開始時間</label>
-      <input type="time" id="shiftStart">
+      <input type="time" id="shiftStart" onchange="onShiftTimeEdited()" onblur="onShiftTimeEdited()">
       <label>結束時間</label>
-      <input type="time" id="shiftEnd">
-      <p class="hint">夜更可設跨日時間，例如 21:00–07:00。</p>
+      <input type="time" id="shiftEnd" onchange="onShiftTimeEdited()" onblur="onShiftTimeEdited()">
+      <p class="hint">夜更可設跨日時間，例如 21:00–07:00。更改時間後會自動儲存。</p>
     </div>
-    <button class="btn" onclick="saveShiftCell()">儲存</button>
-    <button class="btn secondary" onclick="clearShiftCell()">清除更別</button>
+    <p class="shift-save-status" id="shiftSaveStatus"></p>
+    <p class="hint">點選更別即會儲存，不用再按儲存。若要清除這日更別，請用下面的清除，或在更表長按該日期。</p>
+    <div class="clear-shift-wrap">
+      <button type="button" class="clear-shift-link" onclick="confirmClearCurrentShift()">清除這日更別…</button>
+    </div>
   </div>
 </div>
 
@@ -973,6 +1023,20 @@ input[type="date"], input[type="time"] {
     <label>或在此貼上</label>
     <textarea id="csvText" rows="8" placeholder="學生,日期,更別,開始,結束"></textarea>
     <button class="btn" onclick="importRosterCsv()">匯入</button>
+  </div>
+</div>
+
+<!-- 實習總結 Modal -->
+<div id="summaryModal" class="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('summaryModal')">&times;</span>
+    <h2 id="summaryModalTitle">實習總結</h2>
+    <p class="hint">可預覽後儲存為圖片或 PDF，方便分享或存檔。資料只在這部手機處理。</p>
+    <div class="summary-preview-wrap">
+      <img id="summaryPreview" alt="實習總結預覽">
+    </div>
+    <button class="btn" onclick="exportSummaryPng()">儲存圖片</button>
+    <button class="btn secondary" onclick="exportSummaryPdf()">儲存 PDF</button>
   </div>
 </div>
 
@@ -1030,6 +1094,7 @@ function getShiftType(id) {
 
 let rosterFocusId = null;
 let pendingShift = { studentId: '', date: '', typeId: '' };
+let shiftTimeApplying = false;
 
 function esc(s) {
   return String(s == null ? '' : s)
@@ -1380,16 +1445,18 @@ function renderStudents() {
   list.innerHTML = data.students.map(s => {
     const exams = examSummary(s);
     const ward = s.ward ? ' · 病房 ' + s.ward : '';
+    const finished = isInternshipFinished(s);
     return `
     <div class="student-item">
       <div class="meta">
-        <strong>${esc(s.name)}</strong> <span class="badge">${esc(s.hospital || '')}</span><br>
+        <strong>${esc(s.name)}</strong> <span class="badge">${esc(s.hospital || '')}</span>${finished ? '<span class="badge badge-done">實習已完</span>' : ''}<br>
         <small>${esc(s.class || '')}${esc(ward)} · 結束：${esc(s.endDate || '未設定')}</small>
         ${exams ? '<br><small>考試：' + esc(exams) + '</small>' : ''}
       </div>
       <div class="student-actions">
         <button class="btn secondary" style="width:auto; padding:6px 12px; margin-top:0;" onclick="editStudent('${s.id}')">編輯</button>
         <button class="btn secondary" style="width:auto; padding:6px 12px; margin-top:0;" onclick="openStudentRoster('${s.id}')">更表</button>
+        <button class="btn${finished ? '' : ' secondary'}" style="width:auto; padding:6px 12px; margin-top:0;" onclick="openStudentSummary('${s.id}')">匯出總結</button>
       </div>
     </div>`;
   }).join('');
@@ -1409,6 +1476,8 @@ function openStudentModal(id) {
     document.getElementById('sNote').value = s.note || '';
     fillExamFields(s.examScores);
     if (rosterBtn) rosterBtn.style.display = 'block';
+    const sumBtn = document.getElementById('studentSummaryBtn');
+    if (sumBtn) sumBtn.style.display = 'block';
   } else {
     document.getElementById('sName').value = '';
     document.getElementById('sClass').value = '';
@@ -1418,6 +1487,8 @@ function openStudentModal(id) {
     document.getElementById('sNote').value = '';
     fillExamFields(null);
     if (rosterBtn) rosterBtn.style.display = 'none';
+    const sumBtn = document.getElementById('studentSummaryBtn');
+    if (sumBtn) sumBtn.style.display = 'none';
   }
   document.getElementById('studentModal').classList.add('show');
 }
@@ -2293,7 +2364,7 @@ function renderRoster() {
       const ds = toDateStr(d);
       const shift = s.shifts && s.shifts[ds];
       const cls = !shift ? ' empty' : (shift.off ? ' off' : '');
-      return `<button type="button" class="shift-day${cls}" onclick="openShiftPicker('${s.id}', '${ds}')">
+      return `<button type="button" class="shift-day${cls}" data-student-id="${esc(s.id)}" data-date="${ds}" onclick="openShiftPicker('${s.id}', '${ds}')">
         <span class="dlabel">${esc(formatDayLabel(d))}</span>
         <span class="dval">${esc(shift ? formatShift(shift) : '點擊輸入')}</span>
       </button>`;
@@ -2415,6 +2486,7 @@ function openShiftPicker(studentId, dateStr) {
     document.getElementById('shiftStart').value = '';
     document.getElementById('shiftEnd').value = '';
   }
+  showShiftStatus('');
   renderShiftTypeButtons();
   document.getElementById('shiftModal').classList.add('show');
 }
@@ -2432,6 +2504,7 @@ function renderShiftTypeButtons() {
 function selectShiftType(id) {
   const t = getShiftType(id);
   pendingShift.typeId = id;
+  shiftTimeApplying = true;
   if (t && t.off) {
     document.getElementById('shiftStart').value = '';
     document.getElementById('shiftEnd').value = '';
@@ -2439,34 +2512,115 @@ function selectShiftType(id) {
     document.getElementById('shiftStart').value = t.start;
     document.getElementById('shiftEnd').value = t.end;
   }
+  shiftTimeApplying = false;
   renderShiftTypeButtons();
+  if (t && (t.off || (t.id !== 'CUSTOM' && t.start && t.end))) persistPendingShift({ close: true });
+  else persistPendingShift({ close: false, requireTimes: true });
 }
 
-function saveShiftCell() {
+function showShiftStatus(msg) {
+  const el = document.getElementById('shiftSaveStatus');
+  if (el) el.textContent = msg || '';
+}
+
+function persistPendingShift(opts) {
+  opts = opts || {};
   const t = getShiftType(pendingShift.typeId) || getShiftType('CUSTOM');
-  const start = document.getElementById('shiftStart').value;
-  const end = document.getElementById('shiftEnd').value;
+  if (!t || !pendingShift.studentId || !pendingShift.date) return false;
   let shift;
   if (t.off) {
     shift = { code: t.id, label: t.label, start: '', end: '', off: true };
   } else {
-    if (!start || !end) return alert('請填寫開始與結束時間');
+    const start = document.getElementById('shiftStart').value;
+    const end = document.getElementById('shiftEnd').value;
+    if (!start || !end) {
+      if (opts.requireTimes) showShiftStatus('請填寫開始與結束時間，填好會自動儲存');
+      return false;
+    }
     shift = { code: t.id, label: t.label, start, end, off: false };
   }
   setStudentShift(pendingShift.studentId, pendingShift.date, shift);
   save();
-  closeModal('shiftModal');
+  renderRoster();
+  renderSchedule();
+  showShiftStatus('已儲存');
+  if (opts.close) closeModal('shiftModal');
+  return true;
+}
+
+function onShiftTimeEdited() {
+  if (shiftTimeApplying) return;
+  persistPendingShift({ close: false, requireTimes: false });
+}
+
+function confirmClearShift(studentId, dateStr) {
+  if (!studentId || !dateStr) return;
+  const s = data.students.find(x => x.id === studentId);
+  const existing = getStudentShift(studentId, dateStr);
+  if (!existing) {
+    alert('這日尚未輸入更別。');
+    return;
+  }
+  const who = s ? s.name : '學生';
+  const when = formatDayLabel(dateFromStr(dateStr));
+  if (!confirm('確定清除「' + who + '」在 ' + when + ' 的更別？此日會變回未輸入。')) return;
+  setStudentShift(studentId, dateStr, null);
+  save();
+  if (pendingShift.studentId === studentId && pendingShift.date === dateStr) {
+    showShiftStatus('');
+    closeModal('shiftModal');
+  }
   renderRoster();
   renderSchedule();
 }
 
-function clearShiftCell() {
-  setStudentShift(pendingShift.studentId, pendingShift.date, null);
-  save();
-  closeModal('shiftModal');
-  renderRoster();
-  renderSchedule();
+function confirmClearCurrentShift() {
+  confirmClearShift(pendingShift.studentId, pendingShift.date);
 }
+
+function bindRosterGestures() {
+  const list = document.getElementById('roster-list');
+  if (!list || typeof list.addEventListener !== 'function' || list.dataset.boundGestures) return;
+  list.dataset.boundGestures = '1';
+  let timer = null;
+  let suppressClick = false;
+  const dayBtn = (e) => e.target.closest && e.target.closest('.shift-day');
+  const startPress = (e) => {
+    const btn = dayBtn(e);
+    if (!btn) return;
+    if (e.type === 'mousedown' && e.button !== 0) return;
+    suppressClick = false;
+    timer = setTimeout(() => {
+      timer = null;
+      suppressClick = true;
+      confirmClearShift(btn.getAttribute('data-student-id'), btn.getAttribute('data-date'));
+    }, 560);
+  };
+  const cancelPress = () => {
+    if (timer) { clearTimeout(timer); timer = null; }
+  };
+  list.addEventListener('touchstart', startPress, { passive: true });
+  list.addEventListener('touchend', cancelPress);
+  list.addEventListener('touchcancel', cancelPress);
+  list.addEventListener('touchmove', cancelPress, { passive: true });
+  list.addEventListener('mousedown', startPress);
+  list.addEventListener('mouseup', cancelPress);
+  list.addEventListener('mouseleave', cancelPress);
+  list.addEventListener('click', (e) => {
+    if (!suppressClick) return;
+    e.preventDefault();
+    e.stopPropagation();
+    suppressClick = false;
+  }, true);
+  list.addEventListener('contextmenu', (e) => {
+    const btn = dayBtn(e);
+    if (!btn) return;
+    e.preventDefault();
+    cancelPress();
+    confirmClearShift(btn.getAttribute('data-student-id'), btn.getAttribute('data-date'));
+  });
+}
+
 
 function showRosterPhoto(e) {
   const file = e.target.files && e.target.files[0];
@@ -2747,6 +2901,566 @@ function fillExamFields(scores) {
 }
 
 
+const HOSPITAL_LABELS = {
+  QMH: '瑪麗醫院 QMH',
+  TWH: '東華醫院 TWH',
+  GH: '葛量洪醫院 GH'
+};
+
+let lastSummaryCanvas = null;
+let lastSummaryName = '';
+
+function hospitalLabel(code) {
+  if (!code) return '';
+  return HOSPITAL_LABELS[code] || code;
+}
+
+function examResultLabel(result) {
+  if (result === 'PASS') return '合格';
+  if (result === 'FAIL') return '不合格';
+  return '未評';
+}
+
+function prettyDate(dateStr) {
+  if (!dateStr) return '';
+  return dateFromStr(dateStr).toLocaleDateString('zh-HK', {
+    timeZone: HK_TZ,
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function isInternshipFinished(s) {
+  return !!(s && s.endDate && s.endDate <= todayStr());
+}
+
+function collectStudentSummary(s) {
+  const events = (data.events || [])
+    .filter(e => String(e.studentId) === String(s.id))
+    .slice()
+    .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || String(a.start || '').localeCompare(String(b.start || '')));
+  const counts = {};
+  events.forEach(e => {
+    const label = e.typeLabel || e.type || '其他';
+    counts[label] = (counts[label] || 0) + 1;
+  });
+  const countList = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || a.localeCompare(b, 'zh-HK'))
+    .map(label => ({ label, count: counts[label] }));
+  const first = events.length ? events[0].date : '';
+  const last = events.length ? events[events.length - 1].date : '';
+  const shifts = (s.shifts && typeof s.shifts === 'object') ? s.shifts : {};
+  const shiftDates = Object.keys(shifts).filter(d => shifts[d]);
+  const offDays = shiftDates.filter(d => shifts[d].off).length;
+  const dutyDays = shiftDates.length - offDays;
+  return {
+    student: s,
+    events,
+    countList,
+    first,
+    last,
+    shiftDays: shiftDates.length,
+    offDays,
+    dutyDays,
+    exams: normalizeExamScores(s.examScores),
+    finished: isInternshipFinished(s)
+  };
+}
+
+function themeColors() {
+  const s = getComputedStyle(document.documentElement);
+  const val = (name, fallback) => (s.getPropertyValue(name) || '').trim() || fallback;
+  return {
+    bg: val('--bg', '#fbf3f6'),
+    surface: val('--surface', '#ffffff'),
+    text: val('--text', '#3a2430'),
+    muted: val('--text-muted', '#8a6873'),
+    primary: val('--primary', '#d46a8a'),
+    primarySoft: val('--primary-soft', '#fde8ef'),
+    primaryDark: val('--primary-dark', '#b44d6a'),
+    border: val('--border', '#f0d8e0'),
+    dayBg: val('--day-bg', '#fde8ef'),
+    header: val('--header', '#d46a8a')
+  };
+}
+
+function hexToRgb(hex) {
+  const m = String(hex || '').trim().match(/^#([0-9a-f]{3,8})$/i);
+  if (!m) return { r: 212, g: 106, b: 138 };
+  let h = m[1];
+  if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+}
+
+function rgba(hex, a) {
+  const { r, g, b } = hexToRgb(hex);
+  return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')';
+}
+
+function roundRectPath(ctx, x, y, w, h, r) {
+  const rad = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rad, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rad);
+  ctx.arcTo(x + w, y + h, x, y + h, rad);
+  ctx.arcTo(x, y + h, x, y, rad);
+  ctx.arcTo(x, y, x + w, y, rad);
+  ctx.closePath();
+}
+
+function drawHeart(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.translate(x, y);
+  ctx.beginPath();
+  ctx.moveTo(0, size * 0.35);
+  ctx.bezierCurveTo(-size, -size * 0.3, -size * 0.45, -size * 0.95, 0, -size * 0.4);
+  ctx.bezierCurveTo(size * 0.45, -size * 0.95, size, -size * 0.3, 0, size * 0.35);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawSparkle(ctx, x, y, size, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.translate(x, y);
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const ang = (Math.PI / 4) * i - Math.PI / 2;
+    const r = i % 2 === 0 ? size : size * 0.38;
+    const fn = i === 0 ? 'moveTo' : 'lineTo';
+    ctx[fn](Math.cos(ang) * r, Math.sin(ang) * r);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function canvasFont(weight, size) {
+  return weight + ' ' + size + "px 'PingFang TC','Noto Sans TC','Hiragino Sans CNS','Heiti TC','Microsoft JhengHei','-apple-system',sans-serif";
+}
+
+function wrapCanvasText(ctx, text, maxWidth) {
+  const str = String(text || '');
+  if (!str) return [];
+  const lines = [];
+  let line = '';
+  for (const ch of str) {
+    const trial = line + ch;
+    if (ctx.measureText(trial).width > maxWidth && line) {
+      lines.push(line);
+      line = ch;
+    } else line = trial;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
+function drawStudentSummaryCanvas(summary) {
+  const colors = themeColors();
+  const W = 1080;
+  const pad = 64;
+  const inner = W - pad * 2;
+  const measure = document.createElement('canvas');
+  measure.width = W;
+  measure.height = 8;
+  const mctx = measure.getContext('2d');
+
+  const infoRows = [];
+  const s = summary.student;
+  if (s.class) infoRows.push(['班別', s.class]);
+  if (s.hospital) infoRows.push(['醫院', hospitalLabel(s.hospital)]);
+  if (s.ward) infoRows.push(['病房', s.ward]);
+  if (s.endDate) infoRows.push(['實習結束', prettyDate(s.endDate)]);
+  if (summary.first || summary.last) {
+    const from = prettyDate(summary.first) || '—';
+    const to = prettyDate(summary.last) || prettyDate(s.endDate) || '—';
+    infoRows.push(['訪視期間', from === to ? from : from + ' 至 ' + to]);
+  }
+  if (s.note) infoRows.push(['備註', s.note]);
+
+  const examRows = EXAM_KEYS.map(k => {
+    const ex = summary.exams[k];
+    return { key: k, score: ex.score || '', result: examResultLabel(ex.result), raw: ex.result };
+  });
+
+  const visitLines = summary.countList.map(c => c.label + '  ×  ' + c.count);
+  const maxVisitList = 12;
+  const eventLines = summary.events.slice(0, maxVisitList).map(e => {
+    const end = e.start ? minutesToTime(timeToMinutes(e.start) + (e.duration || 60)) : '';
+    const time = e.start ? (e.start + (end ? '–' + end : '')) : '';
+    return prettyDate(e.date) + '  ' + time + '  ' + (e.typeLabel || e.type || '');
+  });
+  const extraEvents = Math.max(0, summary.events.length - maxVisitList);
+
+  function textH(ctx, font, text, width, lineH) {
+    ctx.font = font;
+    return Math.max(1, wrapCanvasText(ctx, text, width).length) * lineH;
+  }
+
+  let y = 0;
+  y += 86;
+  y += 62;
+  y += summary.finished ? 52 : 12;
+  y += 78;
+  y += 28;
+  y += 54;
+  const bodyFont = canvasFont('500', 28);
+  const labelFont = canvasFont('600', 24);
+  infoRows.forEach(row => {
+    mctx.font = bodyFont;
+    const lines = wrapCanvasText(mctx, row[1], inner - 64 - 160);
+    y += Math.max(40, lines.length * 38);
+  });
+  y += 48;
+  y += 54;
+  y += 36 + examRows.length * 72;
+  y += 48;
+  y += 54;
+  y += 46;
+  if (summary.shiftDays) y += 40;
+  y += visitLines.length * 38;
+  if (visitLines.length) y += 20;
+  y += eventLines.length * 36;
+  if (extraEvents) y += 36;
+  if (!summary.events.length) y += 40;
+  y += 90;
+  y += 64;
+
+  const H = Math.max(y, 1500);
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = colors.bg;
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = rgba(colors.primary, 0.14);
+  ctx.beginPath(); ctx.arc(120, 80, 160, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = rgba(colors.primary, 0.10);
+  ctx.beginPath(); ctx.arc(W - 60, 220, 200, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = rgba(colors.primary, 0.09);
+  ctx.beginPath(); ctx.arc(80, H - 80, 140, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = rgba(colors.primary, 0.08);
+  ctx.beginPath(); ctx.arc(W - 140, H - 160, 110, 0, Math.PI * 2); ctx.fill();
+
+  drawHeart(ctx, W - 88, 72, 22, rgba(colors.primary, 0.45));
+  drawHeart(ctx, 92, 150, 16, rgba(colors.primary, 0.35));
+  drawSparkle(ctx, 180, 70, 12, rgba(colors.primary, 0.4));
+  drawSparkle(ctx, W - 180, 130, 10, rgba(colors.primary, 0.35));
+  drawSparkle(ctx, W - 70, H - 90, 11, rgba(colors.primary, 0.3));
+
+  let cy = 86;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = colors.muted;
+  ctx.font = canvasFont('600', 22);
+  ctx.fillText('護士老師排程工具', pad, cy);
+  cy += 50;
+
+  ctx.fillStyle = colors.primaryDark;
+  ctx.font = canvasFont('700', 52);
+  ctx.fillText('實習總結', pad, cy);
+  drawHeart(ctx, pad + ctx.measureText('實習總結').width + 36, cy + 28, 18, colors.primary);
+  cy += 66;
+
+  if (summary.finished) {
+    const pill = '實習完成';
+    ctx.font = canvasFont('700', 22);
+    const pw = ctx.measureText(pill).width + 44;
+    roundRectPath(ctx, pad, cy, pw, 40, 20);
+    ctx.fillStyle = colors.primary;
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(pill, pad + 22, cy + 8);
+    cy += 56;
+  } else cy += 10;
+
+  ctx.fillStyle = colors.text;
+  ctx.font = canvasFont('700', 48);
+  const nameLines = wrapCanvasText(ctx, s.name || '學生', inner);
+  nameLines.forEach(line => { ctx.fillText(line, pad, cy); cy += 56; });
+  cy += 18;
+
+  function drawCard(title, contentFn) {
+    const start = cy;
+    const contentStart = start + 70;
+    let innerY = contentStart;
+    const measured = contentFn(null, innerY, true);
+    const cardH = measured - start + 36;
+    roundRectPath(ctx, pad, start, inner, cardH, 28);
+    ctx.fillStyle = colors.surface;
+    ctx.fill();
+    ctx.strokeStyle = colors.border;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = colors.primaryDark;
+    ctx.font = canvasFont('700', 28);
+    ctx.fillText(title, pad + 32, start + 24);
+    contentFn(ctx, contentStart, false);
+    cy = start + cardH + 28;
+  }
+
+  drawCard('基本資料', (c, at, measureOnly) => {
+    let iy = at;
+    infoRows.forEach(row => {
+      if (!measureOnly) {
+        c.fillStyle = colors.muted;
+        c.font = labelFont;
+        c.fillText(row[0], pad + 32, iy);
+        c.fillStyle = colors.text;
+        c.font = bodyFont;
+        const lines = wrapCanvasText(c, row[1], inner - 64 - 160);
+        lines.forEach((line, i) => c.fillText(line, pad + 190, iy + i * 38));
+        iy += Math.max(40, lines.length * 38);
+      } else {
+        mctx.font = bodyFont;
+        const lines = wrapCanvasText(mctx, row[1], inner - 64 - 160);
+        iy += Math.max(40, lines.length * 38);
+      }
+    });
+    if (!infoRows.length) {
+      if (!measureOnly) {
+        c.fillStyle = colors.muted;
+        c.font = bodyFont;
+        c.fillText('尚未填寫其他資料', pad + 32, iy);
+      }
+      iy += 40;
+    }
+    return iy;
+  });
+
+  drawCard('考試成績', (c, at, measureOnly) => {
+    let iy = at + 8;
+    examRows.forEach(ex => {
+      if (!measureOnly) {
+        roundRectPath(c, pad + 28, iy, inner - 56, 60, 18);
+        c.fillStyle = colors.dayBg;
+        c.fill();
+        c.fillStyle = colors.text;
+        c.font = canvasFont('700', 26);
+        c.fillText(ex.key, pad + 48, iy + 16);
+        const resultText = (ex.score ? ex.score + ' 　' : '') + ex.result;
+        const pillText = ex.result;
+        c.font = canvasFont('700', 22);
+        const tw = c.measureText(pillText).width + 32;
+        let pillColor = colors.muted;
+        let pillFg = '#fff';
+        if (ex.raw === 'PASS') { pillColor = '#3d9a7a'; }
+        else if (ex.raw === 'FAIL') { pillColor = '#d45b57'; }
+        else { pillColor = colors.border; pillFg = colors.muted; }
+        roundRectPath(c, pad + inner - 28 - tw - 8, iy + 14, tw, 32, 16);
+        c.fillStyle = pillColor;
+        c.fill();
+        c.fillStyle = pillFg;
+        c.fillText(pillText, pad + inner - 28 - tw + 8, iy + 19);
+        if (ex.score) {
+          c.fillStyle = colors.text;
+          c.font = canvasFont('500', 26);
+          c.fillText(ex.score + ' 分', pad + 200, iy + 16);
+        } else if (ex.raw !== 'PASS' && ex.raw !== 'FAIL') {
+          c.fillStyle = colors.muted;
+          c.font = canvasFont('500', 24);
+          c.fillText('尚未評分', pad + 200, iy + 17);
+        }
+      }
+      iy += 72;
+    });
+    return iy;
+  });
+
+  drawCard('實習訪視摘要', (c, at, measureOnly) => {
+    let iy = at;
+    const total = summary.events.length;
+    const headline = total ? ('共訪視  ' + total + '  次') : '尚未編排訪視';
+    if (!measureOnly) {
+      c.fillStyle = colors.primaryDark;
+      c.font = canvasFont('700', 30);
+      c.fillText(headline, pad + 32, iy);
+    }
+    iy += 46;
+    if (summary.shiftDays) {
+      const shiftLine = '更表已記錄 ' + summary.shiftDays + ' 日（上班 ' + summary.dutyDays + ' 日' + (summary.offDays ? '、休息／假期 ' + summary.offDays + ' 日' : '') + '）';
+      if (!measureOnly) {
+        c.fillStyle = colors.muted;
+        c.font = canvasFont('500', 24);
+        c.fillText(shiftLine, pad + 32, iy);
+      }
+      iy += 40;
+    }
+    visitLines.forEach(line => {
+      if (!measureOnly) {
+        c.fillStyle = colors.text;
+        c.font = canvasFont('500', 26);
+        c.fillText('•  ' + line, pad + 32, iy);
+      }
+      iy += 38;
+    });
+    if (visitLines.length) iy += 16;
+    eventLines.forEach(line => {
+      if (!measureOnly) {
+        c.fillStyle = colors.muted;
+        c.font = canvasFont('500', 23);
+        const clipped = wrapCanvasText(c, line, inner - 64);
+        c.fillText(clipped[0] || line, pad + 32, iy);
+      }
+      iy += 36;
+    });
+    if (extraEvents) {
+      if (!measureOnly) {
+        c.fillStyle = colors.muted;
+        c.font = canvasFont('500', 23);
+        c.fillText('以及其他 ' + extraEvents + ' 項訪視', pad + 32, iy);
+      }
+      iy += 36;
+    }
+    return iy;
+  });
+
+  ctx.fillStyle = colors.muted;
+  ctx.font = canvasFont('500', 20);
+  ctx.textAlign = 'center';
+  ctx.fillText('由護士老師排程工具匯出  ·  ' + prettyDate(todayStr()), W / 2, H - 58);
+  drawHeart(ctx, W / 2 - ctx.measureText('由護士老師排程工具匯出  ·  ' + prettyDate(todayStr())).width / 2 - 22, H - 48, 9, rgba(colors.primary, 0.5));
+  return canvas;
+}
+
+function openStudentSummary(id) {
+  const s = data.students.find(x => String(x.id) === String(id));
+  if (!s) return alert('找不到這位學生');
+  closeModal('studentModal');
+  const summary = collectStudentSummary(s);
+  lastSummaryCanvas = drawStudentSummaryCanvas(summary);
+  lastSummaryName = s.name || '學生';
+  const img = document.getElementById('summaryPreview');
+  const title = document.getElementById('summaryModalTitle');
+  if (title) title.textContent = lastSummaryName + '的實習總結';
+  if (img) {
+    img.src = lastSummaryCanvas.toDataURL('image/png');
+    img.alt = lastSummaryName + '的實習總結';
+  }
+  document.getElementById('summaryModal').classList.add('show');
+}
+
+function summaryFileBase() {
+  const safe = String(lastSummaryName || '學生').replace(/[\\/:*?"<>|]/g, '_');
+  return '實習總結_' + safe + '_' + todayStr();
+}
+
+async function shareOrDownload(blob, filename) {
+  const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: filename });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+async function exportSummaryPng() {
+  if (!lastSummaryCanvas) return alert('請先開啟總結');
+  const blob = await new Promise(resolve => lastSummaryCanvas.toBlob(resolve, 'image/png'));
+  if (!blob) return alert('無法產生圖片');
+  await shareOrDownload(blob, summaryFileBase() + '.png');
+}
+
+async function exportSummaryPdf() {
+  if (!lastSummaryCanvas) return alert('請先開啟總結');
+  try {
+    const blob = await canvasToPdfBlob(lastSummaryCanvas);
+    await shareOrDownload(blob, summaryFileBase() + '.pdf');
+  } catch (err) {
+    alert('無法產生 PDF：' + (err && err.message ? err.message : err));
+  }
+}
+
+function bytesToAscii(bytes) {
+  let out = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    out += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return out;
+}
+
+async function deflateBytes(bytes) {
+  if (typeof CompressionStream === 'function') {
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  return bytes;
+}
+
+async function canvasToPdfBlob(canvas) {
+  const w = canvas.width;
+  const h = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.getImageData(0, 0, w, h).data;
+  const rgb = new Uint8Array(w * h * 3);
+  for (let i = 0, j = 0; i < img.length; i += 4, j += 3) {
+    rgb[j] = img[i];
+    rgb[j + 1] = img[i + 1];
+    rgb[j + 2] = img[i + 2];
+  }
+  const compressed = await deflateBytes(rgb);
+  const useFlate = compressed.length < rgb.length;
+  const imgData = useFlate ? compressed : rgb;
+  const pageW = 595.28;
+  const pageH = Math.round(pageW * h / w * 100) / 100;
+  const objs = [];
+  const add = s => { objs.push(s); return objs.length; };
+  add('<< /Type /Catalog /Pages 2 0 R >>');
+  add('<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  add('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageW + ' ' + pageH + '] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+  const imgDict = '<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h +
+    ' /ColorSpace /DeviceRGB /BitsPerComponent 8' +
+    (useFlate ? ' /Filter /FlateDecode' : '') +
+    ' /Length ' + imgData.length + ' >>\nstream\n';
+  const content = 'q ' + pageW + ' 0 0 ' + pageH + ' 0 0 cm /Im0 Do Q';
+  add(null);
+  add('<< /Length ' + content.length + ' >>\nstream\n' + content + '\nendstream');
+  const encoder = new TextEncoder();
+  const chunks = ['%PDF-1.4\n'];
+  const offsets = [0];
+  let pos = 9;
+  function pushStr(str) {
+    chunks.push(str);
+    pos += encoder.encode(str).length;
+  }
+  function pushBytes(label, bytes) {
+    chunks.push(label);
+    pos += encoder.encode(label).length;
+    chunks.push(bytes);
+    pos += bytes.length;
+  }
+  for (let i = 0; i < objs.length; i++) {
+    offsets.push(pos);
+    const num = (i + 1) + ' 0 obj\n';
+    if (i === 3) {
+      pushBytes(num + imgDict, imgData);
+      pushStr('\nendstream\nendobj\n');
+    } else {
+      pushStr(num + objs[i] + '\nendobj\n');
+    }
+  }
+  const xrefPos = pos;
+  let xref = 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n';
+  offsets.slice(1).forEach(off => {
+    xref += String(off).padStart(10, '0') + ' 00000 n \n';
+  });
+  pushStr(xref);
+  pushStr('trailer << /Size ' + (objs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xrefPos + '\n%%EOF');
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+
 function exportData() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
   const a = document.createElement('a');
@@ -2788,6 +3502,7 @@ try {
   renderThemePicker();
   renderWeeklyRuleCheckToggle();
   renderShiftDefaultsEditor();
+  bindRosterGestures();
   const dateInput = document.getElementById('eDate');
   if (dateInput) dateInput.value = todayStr();
   console.log('App loaded');

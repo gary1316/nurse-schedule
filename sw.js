@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v10-shift-default-hours';
+const CACHE = 'nurse-schedule-v11-autosave-shift-summary';
 const ASSETS = [
   './',
   './index.html',

@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v7-weekly-rule-toggle';
+const CACHE = 'nurse-schedule-v8-split-rule-toggles';
 const ASSETS = [
   './',
   './index.html',

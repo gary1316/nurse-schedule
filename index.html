@@ -628,7 +628,10 @@ input[type="date"], input[type="time"] {
   justify-content: space-between;
   gap: 14px;
   min-height: 48px;
-  padding: 4px 0;
+  padding: 8px 0;
+}
+.toggle-row + .toggle-row {
+  border-top: 1px solid var(--border);
 }
 .toggle-row .toggle-text { min-width: 0; }
 .toggle-row .toggle-name { display: block; font-size: 1rem; font-weight: 650; color: var(--text); }
@@ -765,14 +768,24 @@ input[type="date"], input[type="time"] {
   </div>
   <div class="card">
     <h3>每週規則檢查</h3>
-    <p class="hint">開啟後，時間表會檢查每名實習學生每星期是否出現最少兩次（任何類型），以及同一日是否多於一次，並列出不達標的學生。關閉後不會顯示這些規則。根據更表判斷時間是否衝突的提示不受影響。</p>
+    <p class="hint">兩項規則可分別開啟或關閉。關閉的規則不會在時間表列出不達標學生。根據更表判斷時間是否衝突的提示不受影響。</p>
     <div class="toggle-row">
       <div class="toggle-text">
-        <span class="toggle-name">每週規則檢查</span>
-        <span class="toggle-state" id="weeklyRuleCheckState">已開啟</span>
+        <span class="toggle-name" id="weeklyRuleMinTwiceLabel">每名學生每星期最少出現兩次</span>
+        <span class="toggle-state" id="weeklyRuleMinTwiceState">已開啟</span>
       </div>
       <div class="toggle-switch">
-        <input type="checkbox" id="weeklyRuleCheckToggle" checked aria-labelledby="weeklyRuleCheckState" onchange="setWeeklyRuleCheck(this.checked)">
+        <input type="checkbox" id="weeklyRuleMinTwiceToggle" checked aria-labelledby="weeklyRuleMinTwiceLabel weeklyRuleMinTwiceState" onchange="setWeeklyRuleMinTwice(this.checked)">
+        <span class="toggle-track"></span>
+      </div>
+    </div>
+    <div class="toggle-row">
+      <div class="toggle-text">
+        <span class="toggle-name" id="weeklyRuleOncePerDayLabel">每名學生同一日最多一次</span>
+        <span class="toggle-state" id="weeklyRuleOncePerDayState">已開啟</span>
+      </div>
+      <div class="toggle-switch">
+        <input type="checkbox" id="weeklyRuleOncePerDayToggle" checked aria-labelledby="weeklyRuleOncePerDayLabel weeklyRuleOncePerDayState" onchange="setWeeklyRuleOncePerDay(this.checked)">
         <span class="toggle-track"></span>
       </div>
     </div>
@@ -937,7 +950,7 @@ input[type="date"], input[type="time"] {
 
 <script>
 const STORAGE_KEY = 'nurse_teacher_v1';
-let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink', rosterSpan: 1, weeklyRuleCheck: true };
+let data = { students: [], events: [], weekOffset: 0, activityTypes: null, theme: 'pink', rosterSpan: 1, weeklyRuleMinTwice: true, weeklyRuleOncePerDay: true };
 
 const HK_TZ = 'Asia/Hong_Kong';
 const EXAM_KEYS = ['AOM', 'AT', 'HFPE'];
@@ -1272,7 +1285,11 @@ function load() {
   if (!data.theme) data.theme = 'pink';
   if (typeof data.weekOffset !== 'number') data.weekOffset = 0;
   if (data.rosterSpan !== 2) data.rosterSpan = 1;
-  if (data.weeklyRuleCheck !== false) data.weeklyRuleCheck = true;
+  if (typeof data.weeklyRuleMinTwice !== 'boolean' || typeof data.weeklyRuleOncePerDay !== 'boolean') {
+    const legacyOn = data.weeklyRuleCheck !== false;
+    if (typeof data.weeklyRuleMinTwice !== 'boolean') data.weeklyRuleMinTwice = legacyOn;
+    if (typeof data.weeklyRuleOncePerDay !== 'boolean') data.weeklyRuleOncePerDay = legacyOn;
+  }
   applyTheme(data.theme, false);
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -2011,28 +2028,50 @@ function getRosterDays() {
   return days;
 }
 
-function isWeeklyRuleCheckEnabled() {
-  return data.weeklyRuleCheck !== false;
+function isWeeklyRuleMinTwiceEnabled() {
+  return data.weeklyRuleMinTwice !== false;
 }
 
-function setWeeklyRuleCheck(on) {
-  data.weeklyRuleCheck = !!on;
+function isWeeklyRuleOncePerDayEnabled() {
+  return data.weeklyRuleOncePerDay !== false;
+}
+
+function isAnyWeeklyRuleEnabled() {
+  return isWeeklyRuleMinTwiceEnabled() || isWeeklyRuleOncePerDayEnabled();
+}
+
+function setWeeklyRuleMinTwice(on) {
+  data.weeklyRuleMinTwice = !!on;
+  save();
+  renderWeeklyRuleCheckToggle();
+  renderSchedule();
+}
+
+function setWeeklyRuleOncePerDay(on) {
+  data.weeklyRuleOncePerDay = !!on;
   save();
   renderWeeklyRuleCheckToggle();
   renderSchedule();
 }
 
 function renderWeeklyRuleCheckToggle() {
-  const input = document.getElementById('weeklyRuleCheckToggle');
-  const state = document.getElementById('weeklyRuleCheckState');
-  const enabled = isWeeklyRuleCheckEnabled();
-  if (input) input.checked = enabled;
-  if (state) state.textContent = enabled ? '已開啟' : '已關閉';
+  const pairs = [
+    ['weeklyRuleMinTwiceToggle', 'weeklyRuleMinTwiceState', isWeeklyRuleMinTwiceEnabled()],
+    ['weeklyRuleOncePerDayToggle', 'weeklyRuleOncePerDayState', isWeeklyRuleOncePerDayEnabled()]
+  ];
+  pairs.forEach(([inputId, stateId, enabled]) => {
+    const input = document.getElementById(inputId);
+    const state = document.getElementById(stateId);
+    if (input) input.checked = enabled;
+    if (state) state.textContent = enabled ? '已開啟' : '已關閉';
+  });
 }
 
 function renderRulePanel(days) {
   if (!data.students.length) return '';
-  const showRules = isWeeklyRuleCheckEnabled();
+  const showMin = isWeeklyRuleMinTwiceEnabled();
+  const showDay = isWeeklyRuleOncePerDayEnabled();
+  const showRules = showMin || showDay;
   const mismatches = findDutyMismatches(days);
   if (!showRules && !mismatches.length) return '';
 
@@ -2040,21 +2079,29 @@ function renderRulePanel(days) {
   let rulesOk = true;
   if (showRules) {
     const r = checkWeeklyRules(days);
-    rulesOk = r.ok;
+    const short = showMin ? r.short : [];
+    const dailyDup = showDay ? r.dailyDup : [];
+    rulesOk = short.length === 0 && dailyDup.length === 0;
     if (r.students.length === 0) {
       body = '<p class="hint">本週沒有仍在實習的學生（實習已於本週開始前結束）。</p>';
-    } else if (r.ok) {
-      body = `<p class="ok-note">本週 ${r.students.length} 位學生均達標：每人都出現最少兩次，而且每日不多於一次。</p>`;
+    } else if (rulesOk) {
+      const bits = [];
+      if (showMin) bits.push('每人都出現最少兩次');
+      if (showDay) bits.push('每日不多於一次');
+      body = `<p class="ok-note">本週 ${r.students.length} 位學生均達標：${bits.join('，')}。</p>`;
     } else {
       const items = [];
-      r.short.forEach(x => {
+      short.forEach(x => {
         if (x.count === 0) items.push(`<li><strong>${esc(x.student.name)}</strong>：本週尚未編排（0 / 2）</li>`);
         else items.push(`<li><strong>${esc(x.student.name)}</strong>：本週只出現 ${x.count} 次（尚欠 ${x.needed} 次）</li>`);
       });
-      r.dailyDup.forEach(x => {
+      dailyDup.forEach(x => {
         items.push(`<li><strong>${esc(x.student.name)}</strong>：${esc(formatDayLabel(dateFromStr(x.date)))} 出現 ${x.count} 次（一日只可 1 次）</li>`);
       });
-      body = '<p class="hint">規則：每名學生每星期要在你的時間表出現兩次（任何類型都可以），同一日最多一次。</p><ul class="rule-list">' + items.join('') + '</ul>';
+      const hints = [];
+      if (showMin) hints.push('每名學生每星期要在你的時間表出現兩次（任何類型都可以）');
+      if (showDay) hints.push('同一日最多一次');
+      body = '<p class="hint">規則：' + hints.join('，') + '。</p><ul class="rule-list">' + items.join('') + '</ul>';
     }
   }
   let dutyHtml = '';

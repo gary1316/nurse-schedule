@@ -872,6 +872,18 @@ input[type="date"], input[type="time"] {
 </div>
 
 <div id="view-settings" class="container" style="display:none;">
+  <div class="card settings-card" data-settings-id="data">
+    <button type="button" class="settings-toggle" onclick="toggleSettingsSection('data')" aria-expanded="true" aria-controls="settings-body-data">
+      <h3>資料管理</h3>
+      <span class="settings-chevron" aria-hidden="true"></span>
+    </button>
+    <div class="settings-body" id="settings-body-data">
+    <p class="hint">所有資料只存在這部手機（完全離線）。</p>
+    <button class="btn secondary" onclick="exportData()">匯出備份</button>
+    <button class="btn secondary" onclick="document.getElementById('importFile').click()">匯入備份</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </div>
   <div class="card settings-card" data-settings-id="theme">
     <button type="button" class="settings-toggle" onclick="toggleSettingsSection('theme')" aria-expanded="true" aria-controls="settings-body-theme">
       <h3>主題</h3>
@@ -921,18 +933,6 @@ input[type="date"], input[type="time"] {
     <div id="shift-defaults-editor"></div>
     <button class="btn" onclick="saveShiftDefaults()">儲存更別時間</button>
     <button class="btn secondary" onclick="restoreShiftDefaults()">恢復原本時間</button>
-    </div>
-  </div>
-  <div class="card settings-card" data-settings-id="data">
-    <button type="button" class="settings-toggle" onclick="toggleSettingsSection('data')" aria-expanded="true" aria-controls="settings-body-data">
-      <h3>資料管理</h3>
-      <span class="settings-chevron" aria-hidden="true"></span>
-    </button>
-    <div class="settings-body" id="settings-body-data">
-    <p class="hint">所有資料只存在這部手機（完全離線）。</p>
-    <button class="btn secondary" onclick="exportData()">匯出備份</button>
-    <button class="btn secondary" onclick="document.getElementById('importFile').click()">匯入備份</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
     </div>
   </div>
   <div class="card settings-card" data-settings-id="activityTypes">
@@ -1501,7 +1501,7 @@ function load() {
 }
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
-const SETTINGS_SECTION_IDS = ['theme', 'weeklyRules', 'shiftDefaults', 'data', 'activityTypes', 'workHours'];
+const SETTINGS_SECTION_IDS = ['data', 'theme', 'weeklyRules', 'shiftDefaults', 'activityTypes', 'workHours'];
 
 function defaultSettingsOpen() {
   const o = {};

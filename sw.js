@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v13-settings-collapse';
+const CACHE = 'nurse-schedule-v14-data-top';
 const ASSETS = [
   './',
   './index.html',

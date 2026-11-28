@@ -1,4 +1,4 @@
-const CACHE = 'nurse-schedule-v11-autosave-shift-summary';
+const CACHE = 'nurse-schedule-v12-student-no';
 const ASSETS = [
   './',
   './index.html',

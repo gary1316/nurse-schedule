@@ -892,6 +892,8 @@ input[type="date"], input[type="time"] {
     <input type="hidden" id="studentId">
     <label>姓名</label>
     <input type="text" id="sName" placeholder="學生姓名">
+    <label>學號</label>
+    <input type="text" id="sStudentNo" placeholder="例如：20240001" autocomplete="off">
     <label>班別</label>
     <input type="text" id="sClass" placeholder="例如：NUR2024A">
     <label>醫院</label>
@@ -1162,6 +1164,7 @@ function normalizeExamScores(raw) {
 function normalizeStudent(s) {
   if (!s || typeof s !== 'object') return s;
   s.ward = s.ward || '';
+  s.studentNo = s.studentNo || '';
   s.examScores = normalizeExamScores(s.examScores);
   if (!s.shifts || typeof s.shifts !== 'object' || Array.isArray(s.shifts)) s.shifts = {};
   return s;
@@ -1445,12 +1448,14 @@ function renderStudents() {
   list.innerHTML = data.students.map(s => {
     const exams = examSummary(s);
     const ward = s.ward ? ' · 病房 ' + s.ward : '';
+    const studentNo = s.studentNo ? '學號 ' + s.studentNo : '';
+    const metaBits = [studentNo, s.class || '', ward.replace(/^ · /, '')].filter(Boolean);
     const finished = isInternshipFinished(s);
     return `
     <div class="student-item">
       <div class="meta">
         <strong>${esc(s.name)}</strong> <span class="badge">${esc(s.hospital || '')}</span>${finished ? '<span class="badge badge-done">實習已完</span>' : ''}<br>
-        <small>${esc(s.class || '')}${esc(ward)} · 結束：${esc(s.endDate || '未設定')}</small>
+        <small>${esc(metaBits.join(' · '))}${metaBits.length ? ' · ' : ''}結束：${esc(s.endDate || '未設定')}</small>
         ${exams ? '<br><small>考試：' + esc(exams) + '</small>' : ''}
       </div>
       <div class="student-actions">
@@ -1469,6 +1474,7 @@ function openStudentModal(id) {
   if (id) {
     const s = data.students.find(x => x.id === id);
     document.getElementById('sName').value = s.name;
+    document.getElementById('sStudentNo').value = s.studentNo || '';
     document.getElementById('sClass').value = s.class || '';
     document.getElementById('sHospital').value = s.hospital;
     document.getElementById('sWard').value = s.ward || '';
@@ -1480,6 +1486,7 @@ function openStudentModal(id) {
     if (sumBtn) sumBtn.style.display = 'block';
   } else {
     document.getElementById('sName').value = '';
+    document.getElementById('sStudentNo').value = '';
     document.getElementById('sClass').value = '';
     document.getElementById('sHospital').value = 'QMH';
     document.getElementById('sWard').value = '';
@@ -1507,6 +1514,7 @@ function saveStudent() {
   const student = Object.assign({}, existing, {
     id,
     name: document.getElementById('sName').value.trim(),
+    studentNo: document.getElementById('sStudentNo').value.trim(),
     class: document.getElementById('sClass').value.trim(),
     hospital: document.getElementById('sHospital').value,
     ward: document.getElementById('sWard').value.trim(),
@@ -2369,10 +2377,13 @@ function renderRoster() {
         <span class="dval">${esc(shift ? formatShift(shift) : '點擊輸入')}</span>
       </button>`;
     }).join('');
-    const ward = s.ward ? ' · 病房 ' + esc(s.ward) : '';
+    const bits = [];
+    if (s.studentNo) bits.push('學號 ' + s.studentNo);
+    if (s.class) bits.push(s.class);
+    if (s.ward) bits.push('病房 ' + s.ward);
     return `<div class="card shift-student-card" id="roster-stu-${s.id}">
       <h3>${esc(s.name)} <span class="badge">${esc(s.hospital || '')}</span></h3>
-      <div class="hint">${esc(s.class || '')}${ward}</div>
+      <div class="hint">${esc(bits.join(' · '))}</div>
       <div class="shift-days">${daysHtml}</div>
       <button class="btn secondary" onclick="copyPrevRosterStudent('${s.id}')">複製此學生上一段更別</button>
     </div>`;
@@ -3068,6 +3079,7 @@ function drawStudentSummaryCanvas(summary) {
 
   const infoRows = [];
   const s = summary.student;
+  if (s.studentNo) infoRows.push(['學號', s.studentNo]);
   if (s.class) infoRows.push(['班別', s.class]);
   if (s.hospital) infoRows.push(['醫院', hospitalLabel(s.hospital)]);
   if (s.ward) infoRows.push(['病房', s.ward]);
